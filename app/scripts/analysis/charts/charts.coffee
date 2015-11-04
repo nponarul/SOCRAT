@@ -2,40 +2,44 @@
   @dependencies: None
   @author: Selvam Palanimalai
 ###
-charts = (angular.module 'app_analysis_charts', [])
+charts = angular.module 'app_analysis_charts', []
 
 ###
   @description: Constructor for this module.
   @type: factory
 ###
-charts.factory('app_analysis_charts_constructor', [
-  'app_analysis_charts_manager'
-  (manager)->
+charts.factory 'app_analysis_charts_constructor', [
+  'app_analysis_charts_eventMngr'
+  (chartsEventMngr)->
     (sb)->
-      msgList = manager.getMsgList()
-      manager.setSb sb unless !sb?
+      msgList = chartsEventMngr.getMsgList()
+      chartsEventMngr.setSb sb unless !sb?
 
       init: (opt) ->
         console.log 'db init called'
-        manager.listenToIncomeEvents()
+        chartsEventMngr.listenToIncomeEvents()
 
       destroy: () ->
 
       msgList: msgList
-])
+]
 
 ###
   @description: Manager for all communication b/w modules.
     Only this service inside this module, has access to sandbox.
   @type: service
 ###
-charts.factory( 'app_analysis_charts_manager', [
-  ()->
+charts.service 'app_analysis_charts_eventMngr', [
+  'app_analysis_charts_compute'
+  (app_analysis_charts_compute)->
     sb = null
 
     msgList =
-      outgoing: ['get table']
-      incoming: ['take table']
+      outcome: ['chart plotted']
+      income:
+        'plot chart':
+          method: app_analysis_charts_compute
+          outcome: 'chart plotted'
       scope: ['charts']
 
     eventManager = (msg, data) ->
@@ -60,7 +64,7 @@ charts.factory( 'app_analysis_charts_manager', [
       msgList
 
     listenToIncomeEvents: () ->
-#app_analysis_charts_compute()
+      app_analysis_charts_compute()
       for msg of msgList.income
         console.log 'subscribed for ' + msg
         sb.subscribe
@@ -68,32 +72,15 @@ charts.factory( 'app_analysis_charts_manager', [
           listener: eventManager
           msgScope: msgList.scope
           context: console
-])
+]
 
-.controller('chartsMainCtrl', [
-    'app_analysis_charts_manager'
-    '$scope'
-    (ctrlMngr, $scope) ->
-      console.log 'chartsMainCtrl executed'
+charts.factory 'app_analysis_charts_compute',[
+    '$q'
+    ($q)->
+        (args...)->
+            #check for tname.
 
-      sb = ctrlMngr.getSb()
-      token = sb.subscribe
-        msg:'take table'
-        msgScope:'charts'
-        listener: (msg, data) ->
-          console.log data
-          dataConsole data
+        #console.log '%c chartsMainCtrl:'+typeof chartsMainCtrl , 'color:yellow'
 
-      sb.publish
-        msg:'get table'
-        msgScope:'charts'
-        callback: -> sb.unsubscribe token
-
-      dataConsole = (data) ->
-        console.log data
-
-
-])
-
-
+]
 
