@@ -122,14 +122,14 @@ charts = angular.module('app_analysis_charts', [])
       y: true
       z: false
       message: "Pick date variable for x and numerical variable for y"
-#    ,
-#      name: 'Stream Graph'
-#      value: 5
-#      x: true
-#      y: true
-#      z: false
-#      message: "Choose two numerical variables"
-
+    ,
+      name: 'Stream Graph'
+      value: 5
+      x: true
+      y: true
+      z: false
+      message: "Choose two numerical variables"
+    ,
       name: 'Treemap'
       value: 6
       x: false
@@ -238,6 +238,75 @@ charts = angular.module('app_analysis_charts', [])
     transpose:_transpose
     format: _format
 ])
+
+
+.factory 'streamGraph', [
+  () ->
+
+    _randomSample  = (data, n) ->
+#take an array of objects, and the desired number of random ones. return array of objects
+      for d in data
+        d.x = +d.x
+        d.y = +d.y
+
+      random = []
+      for i in [0...n-1] by 1
+        random.push(data[Math.floor(Math.random() * data.length)]) #picks random objects from data
+      console.log random
+      return random
+
+    _streamGraph = (data,ranges,width,height,_graph) ->
+      n = 20
+      m = 100
+      test = [_randomSample(data,m), _randomSample(data,m),_randomSample(data,m)]
+      console.log test
+
+
+      stack = d3.layout.stack()(test)
+
+      dataset = [
+        x: 5
+        y:7
+      ,
+        x:8
+        y:10
+      ,
+        x:14
+        y:2
+
+      ]
+
+#      layers = stack(dataset)
+#      console.log data
+#      console.log test
+#      #layers = stack(test)
+#      layers = stack(d3.range(n).map () -> _randomSample(data,m))
+#      console.log layers
+#      #console.log stack
+      x = d3.scale.linear()
+      .domain([0, m - 1])
+      .range([0, width]);
+#
+      y = d3.scale.linear()
+      .domain([0, d3.max(test, (t)-> d3.max(t, (d) -> return d.y0+d.y))])
+      .range([height, 0])
+#
+      color = d3.scale.linear()
+      .range(["#aad", "#556"])
+#
+      area = d3.svg.area()
+      .x((d) -> x d.x)
+      .y0((d) -> y d.y0)
+      .y1((d) -> y(d.y0 + d.y))
+
+      _graph.selectAll("path")
+      .data(test)
+      .enter().append("path")
+      .attr("d", area)
+      .style("fill", () -> color(Math.random()))
+
+    streamGraph: _streamGraph
+]
 
 
 .factory 'scatterPlot', [
@@ -782,50 +851,7 @@ charts = angular.module('app_analysis_charts', [])
 ]
 
 
-.factory 'streamGraph', [
-  () ->
 
-    _randomSample  = (data, n) ->
-      #take an array of objects, and the desired number of random ones. return array of objects
-      for d in data
-        d.x = +d.x
-        d.y = +d.y
-
-      random = []
-      for i in [0...n-1] by 1
-        random.push(data[Math.floor(Math.random() * data.length)])
-      return random
-
-    _streamGraph = (data,ranges,width,height,_graph) ->
-      n = 20
-      m = 100
-      stack = d3.layout.stack().offset('wiggle')
-      layers = stack(d3.range(n).map () -> _randomSample(data,m))
-      console.log layers
-      x = d3.scale.linear()
-        .domain([0, m - 1])
-        .range([0, width]);
-
-      y = d3.scale.linear()
-          .domain([0, d3.max(layers, (layer)-> d3.max(layer, (d) -> return d.y0 + d.y))])
-          .range([height, 0])
-
-      color = d3.scale.linear()
-        .range(["#aad", "#556"])
-
-      area = d3.svg.area()
-              .x((d) -> x d.x)
-              .y0((d) -> y d.y0)
-              .y1((d) -> y(d.y0 + d.y))
-
-      _graph.selectAll("path")
-          .data(layers)
-          .enter().append("path")
-          .attr("d", area)
-          .style("fill", () -> color(Math.random()))
-
-    streamGraph: _streamGraph
-]
 
 
 .factory 'area',[
@@ -1391,6 +1417,7 @@ charts = angular.module('app_analysis_charts', [])
     drawTreemap: _drawTreemap
 ]
 
+
 .directive 'd3Charts', [
   'scatterPlot',
   'histogram',
@@ -1420,7 +1447,7 @@ charts = angular.module('app_analysis_charts', [])
           data = newChartData.data
 #          _label = null
 
-          console.log data
+#          console.log data
 
           #id = '#'+ newInfo.name
           container = d3.select(elem.find('div')[0])
