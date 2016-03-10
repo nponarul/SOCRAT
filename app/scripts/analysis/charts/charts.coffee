@@ -127,7 +127,7 @@ charts = angular.module('app_analysis_charts', [])
       value: 5
       x: true
       y: true
-      z: false
+      z: true
       message: "Choose two numerical variables"
     ,
       name: 'Treemap'
@@ -136,8 +136,13 @@ charts = angular.module('app_analysis_charts', [])
       y: false
       z: false
       message: "Choose one variable to construct Treemap."
-
-
+    ,
+      name: 'Line Chart'
+      value: 7
+      x: true
+      y: true
+      z: false
+      message: "Choose a continuous variable for x and a numerical variable for y"
     ]
     $scope.graphSelect = {}
 
@@ -239,7 +244,58 @@ charts = angular.module('app_analysis_charts', [])
     format: _format
 ])
 
+.factory 'line', [
+  () ->
+    _lineChart = (data,ranges,width,height,_graph, gdata) ->
+      formatDate = d3.time.format("%d-%b-%y")
 
+      for d in data
+        d.x = formatDate.parse(d.x)
+        d.y = +d.y
+
+      x = d3.time.scale()
+        .range([0, width])
+
+      y = d3.scale.linear()
+        .range([height, 0])
+
+      xAxis = d3.svg.axis()
+        .scale(x)
+        .orient("bottom")
+
+      yAxis = d3.svg.axis()
+        .scale(y)
+        .orient("left")
+
+      line = d3.svg.line()
+        .x((d) -> x(d.x))
+        .y((d) -> y(d.y))
+
+      x.domain(d3.extent(data,  (d) -> d.x))
+      y.domain(d3.extent(data,  (d) -> d.y))
+
+      _graph.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis)
+
+      _graph.append("g")
+        .attr("class", "y axis")
+        .call(yAxis)
+        .append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 6)
+        .attr("dy", ".71em")
+        .style("text-anchor", "end")
+        .text gdata.yLab.value
+
+      _graph.append("path")
+        .datum(data)
+        .attr("class", "line")
+        .attr("d", line)
+
+    lineChart: _lineChart
+]
 .factory 'streamGraph', [
   () ->
 
@@ -305,7 +361,59 @@ charts = angular.module('app_analysis_charts', [])
       .attr("d", area)
       .style("fill", () -> color(Math.random()))
 
+
+    _streamGraph2 = (data,ranges,width,height,_graph) ->
+      parseDate = d3.time.format("%m/%d/%y").parse
+      console.log parseDate data[0].x
+
+
+
+      stack = d3.layout.stack()
+                .offset("silhouette")
+                .values((d) -> d.values)
+                .x((d) -> d.x)
+                .y((d) -> d.y)
+
+      x = d3.time.scale()
+            .range([0, width]);
+
+      y = d3.scale.linear()
+            .range([height-10, 0]);
+
+      z = d3.scale.ordinal()
+            .range(["#045A8D", "#2B8CBE", "#74A9CF", "#A6BDDB", "#D0D1E6", "#F1EEF6"])
+
+      console.log data
+
+      area = d3.svg.area()
+              .interpolate("cardinal")
+              .x((d)-> x(d.x))
+              .y0((d)-> y(d.y0))
+              .y1((d)->y(d.y0 + d.y))
+
+      nest = d3.nest().key (d) -> d.z
+
+
+      for d in data
+        d.x = parseDate d.x
+        d.y = +d.y
+
+
+      layers = stack(nest.entries(data))
+
+      x.domain(d3.extent(data, (d)-> d.x))
+      y.domain([0, d3.max(data, (d) -> d.y0 + d.y)])
+
+      console.log layers
+
+      _graph.selectAll("path")
+      .data(layers)
+      .enter().append("path")
+      .attr("d", (d) -> area(d.values))
+      .style("fill", (d,i) -> z(i))
+
     streamGraph: _streamGraph
+    streamGraph2: _streamGraph2
 ]
 
 
@@ -856,7 +964,7 @@ charts = angular.module('app_analysis_charts', [])
 
 .factory 'area',[
   ()->
-    _drawArea = (height,width,_graph, data) ->
+    _drawArea = (height,width,_graph, data,gdata) ->
       parseDate = d3.time.format("%d-%b-%y").parse
 
       for d in data
@@ -879,9 +987,22 @@ charts = angular.module('app_analysis_charts', [])
       y.domain [ 0, d3.max(data, (d) ->
           d.y
         ) ]
-      _graph.append("path").datum(data).attr("class", "area").attr "d", area
-      _graph.append("g").attr("class", "x axis").attr("transform", "translate(0," + height + ")").call xAxis
-      _graph.append("g").attr("class", "y axis").call(yAxis).append("text").attr("transform", "rotate(-90)").attr("y", 6).attr("dy", ".71em").style("text-anchor", "end").text "Price ($)"
+      _graph.append("path")
+          .datum(data)
+          .attr("class", "area")
+          .attr "d", area
+      _graph.append("g")
+          .attr("class", "x axis")
+          .attr("transform", "translate(0," + height + ")")
+          .call xAxis
+
+      _graph.append("g")
+          .attr("class", "y axis")
+          .call(yAxis).append("text")
+          .attr("transform", "rotate(-90)")
+          .attr("y", 6).attr("dy", ".71em")
+          .style("text-anchor", "end")
+          .text gdata.yLab.value
 
     drawArea: _drawArea
 ]
@@ -1425,9 +1546,10 @@ charts = angular.module('app_analysis_charts', [])
   'bubble',
   'bar',
   'streamGraph',
-  'area'
-  'treemap'
-  (scatterPlot,histogram,pie,bubble,bar,streamGraph, area, treemap) ->
+  'area',
+  'treemap',
+  'line'
+  (scatterPlot,histogram,pie,bubble,bar,streamGraph, area, treemap,line) ->
     restrict: 'E'
     template: "<div class='graph-container' style='height: 600px'></div>"
     link: (scope, elem, attr) ->
@@ -1480,9 +1602,11 @@ charts = angular.module('app_analysis_charts', [])
             when 'Scatter Plot'
               scatterPlot.drawScatterPlot(data,ranges,width,height,_graph,container,gdata)
             when 'Stream Graph'
-              streamGraph.streamGraph(data,ranges,width,height,_graph)
+              streamGraph.streamGraph2(data,ranges,width,height,_graph)
             when 'Area Chart'
-              area.drawArea(height,width,_graph, data)
+              area.drawArea(height,width,_graph, data, gdata)
             when 'Treemap'
               treemap.drawTreemap(svg, width, height, margin)
+            when 'Line Chart'
+              line.lineChart(data,ranges,width,height,_graph, gdata)
 ]
