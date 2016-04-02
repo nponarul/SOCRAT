@@ -352,74 +352,26 @@ charts = angular.module('app_analysis_charts', [])
 .factory 'streamGraph', [
   () ->
 
-    _randomSample  = (data, n) ->
-#take an array of objects, and the desired number of random ones. return array of objects
-      for d in data
-        d.x = +d.x
-        d.y = +d.y
-
-      random = []
-      for i in [0...n-1] by 1
-        random.push(data[Math.floor(Math.random() * data.length)]) #picks random objects from data
-      #console.log random
-      return random
-
     _streamGraph = (data,ranges,width,height,_graph) ->
-      n = 20
-      m = 100
-      test = [_randomSample(data,m), _randomSample(data,m),_randomSample(data,m)]
-      #console.log test
-
-
-      stack = d3.layout.stack()(test)
-
-      dataset = [
-        x: 5
-        y:7
-      ,
-        x:8
-        y:10
-      ,
-        x:14
-        y:2
-
-      ]
-
-      #      layers = stack(dataset)
-      #      console.log data
-      #      console.log test
-      #      #layers = stack(test)
-      #      layers = stack(d3.range(n).map () -> _randomSample(data,m))
-      #      console.log layers
-      #      #console.log stack
-      x = d3.scale.linear()
-      .domain([0, m - 1])
-      .range([0, width]);
-      #
-      y = d3.scale.linear()
-      .domain([0, d3.max(test, (t)-> d3.max(t, (d) -> return d.y0+d.y))])
-      .range([height, 0])
-      #
-      color = d3.scale.linear()
-      .range(["#aad", "#556"])
-      #
-      area = d3.svg.area()
-      .x((d) -> x d.x)
-      .y0((d) -> y d.y0)
-      .y1((d) -> y(d.y0 + d.y))
-
-      _graph.selectAll("path")
-      .data(test)
-      .enter().append("path")
-      .attr("d", area)
-      .style("fill", () -> color(Math.random()))
-
-
-    _streamGraph2 = (data,ranges,width,height,_graph) ->
       parseDate = d3.time.format("%m/%d/%y").parse
       #console.log parseDate data[0].x
 
+      x = d3.time.scale()
+      .range([0, width])
 
+      y = d3.scale.linear()
+      .range([height-10, 0])
+
+      z = d3.scale.ordinal()
+      .range(["#045A8D", "#2B8CBE", "#74A9CF", "#A6BDDB", "#D0D1E6", "#F1EEF6"])
+
+      xAxis = d3.svg.axis()
+      .scale(x)
+      .orient("bottom")
+      .ticks(d3.time.weeks)
+
+      yAxis = d3.svg.axis()
+      .scale(y)
 
       stack = d3.layout.stack()
       .offset("silhouette")
@@ -427,14 +379,7 @@ charts = angular.module('app_analysis_charts', [])
       .x((d) -> d.x)
       .y((d) -> d.y)
 
-      x = d3.time.scale()
-      .range([0, width]);
-
-      y = d3.scale.linear()
-      .range([height-10, 0]);
-
-      z = d3.scale.ordinal()
-      .range(["#045A8D", "#2B8CBE", "#74A9CF", "#A6BDDB", "#D0D1E6", "#F1EEF6"])
+      nest = d3.nest().key (d) -> d.z
 
       #console.log data
 
@@ -443,9 +388,6 @@ charts = angular.module('app_analysis_charts', [])
       .x((d)-> x(d.x))
       .y0((d)-> y(d.y0))
       .y1((d)->y(d.y0 + d.y))
-
-      nest = d3.nest().key (d) -> d.z
-
 
       for d in data
         d.x = parseDate d.x
@@ -457,16 +399,30 @@ charts = angular.module('app_analysis_charts', [])
       x.domain(d3.extent(data, (d)-> d.x))
       y.domain([0, d3.max(data, (d) -> d.y0 + d.y)])
 
-      #console.log layers
+      console.log layers
 
-      _graph.selectAll("path")
+      _graph.selectAll(".layer")
       .data(layers)
       .enter().append("path")
+      .attr("class", "layer")
       .attr("d", (d) -> area(d.values))
-      .style("fill", (d,i) -> z(i))
+      .style("fill", (d, i) ->z(i))
+
+      _graph.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis)
+
+      _graph.append("g")
+      .attr("class", "y axis")
+      .attr("transform", "translate(" + width + ", 0)")
+      .call(yAxis.orient("right"))
+
+      _graph.append("g")
+      .attr("class", "y axis")
+      .call(yAxis.orient("left"))
 
     streamGraph: _streamGraph
-    streamGraph2: _streamGraph2
 ]
 
 
@@ -692,6 +648,11 @@ charts = angular.module('app_analysis_charts', [])
 .factory 'bubble', [
   () ->
     _drawBubble = (ranges,width,height,_graph,data,gdata,container) ->
+
+      #testing
+      nest = d3.nest().key (d) -> d.z
+      console.log nest.entries data
+
       x = d3.scale.linear().domain([ranges.xMin,ranges.xMax]).range([ 0, width ])
       y = d3.scale.linear().domain([ranges.yMin,ranges.yMax]).range([ height, 0 ])
       xAxis = d3.svg.axis().scale(x).orient('bottom')
@@ -1055,6 +1016,11 @@ charts = angular.module('app_analysis_charts', [])
     drawArea: _drawArea
 ]
 
+.factory 'stackedArea', [
+  () ->
+    _stackedArea = () ->
+
+]
 
 .factory 'treemap',[
   () ->
@@ -1655,7 +1621,7 @@ charts = angular.module('app_analysis_charts', [])
             when 'Scatter Plot'
               scatterPlot.drawScatterPlot(data,ranges,width,height,_graph,container,gdata)
             when 'Stream Graph'
-              streamGraph.streamGraph2(data,ranges,width,height,_graph)
+              streamGraph.streamGraph(data,ranges,width,height,_graph)
             when 'Area Chart'
               area.drawArea(height,width,_graph, data, gdata)
             when 'Treemap'
