@@ -135,7 +135,7 @@ charts = angular.module('app_analysis_charts', [])
       x: true
       y: false
       z: false
-      message: "Choose any variable to construct Treemap."
+      message: "Choose any variable to construct Treemap. Use the slider below the treemap to adjust the depth of the Treemap."
     ,
       name: 'Line Chart'
       value: 8
@@ -1005,7 +1005,7 @@ charts = angular.module('app_analysis_charts', [])
 
 .factory 'treemap',[
   () ->
-    _drawTreemap = (svg, width, height, margin) ->
+    _drawTreemap = (svg, width, height, container) ->
       data =   {"name": "SOCR", "url": "http://www.socr.ucla.edu/", "size": 35000,"children":
 
                 [ {"name": "Get Started", "url": "http://wiki.stat.ucla.edu/socr/index.php/Main_Page", "size": 23333.333333333332,"children":
@@ -1496,51 +1496,89 @@ charts = angular.module('app_analysis_charts', [])
                   }]
               }
 
-      color = d3.scale.category10()
-      depthRestriction = 5
-      treemap = d3.layout.treemap()
-      .size([width, height])
-      .padding(4)
-      .sticky(true)
-      .value((d) ->d.size)
+      maxDepth = 5
+      sliderValue = 3
 
-      filteredData = treemap.nodes(data).filter((d) -> d.depth < depthRestriction)
+      sliderBar = container.append('input')
+      .attr('id', 'slider')
+      .attr('type', 'range')
+      .attr('min', '1')
+      .attr('max', maxDepth)
+      .attr('step', '1')
+      .attr('value', '3')
 
-      node = svg.append('g')
-      .selectAll('g.node')
-      .data(filteredData)
-      .enter().append('g')
-      .attr('class', 'node')
-      .attr('transform', (d) -> 'translate(' + d.x + ',' + d.y + ')')
-      .append('svg')
-      .attr('class', 'inner-node')
-      .attr('width', (d) -> Math.max(0.01, d.dx - 1))
-      .attr('height', (d) -> Math.max(0.01, d.dy - 1))
-      .on('click', (d) -> if d.url then window.open(d.url))
+      plotTreemap = (sliderValue, maxDepth) ->
+        color = d3.scale.category10()
+        depthRestriction = sliderValue
+        treemap = d3.layout.treemap()
+        .size([width, height])
+        .padding(4)
+        .sticky(true)
+        .value((d) ->d.size)
+
+        filteredData = treemap.nodes(data).filter((d) -> d.depth < depthRestriction)
+        leafNodes = treemap.nodes(data).filter((d) -> !d.children) # get all the leaf children
+        findMaxDepth = (d) ->
+          tmpMaxDepth = 0
+          for i in [0..d.length-1] by 1
+            if d[i].depth > tmpMaxDepth then tmpMaxDepth = d[i].depth
+          return tmpMaxDepth
+        maxDepth = findMaxDepth(leafNodes) + 1
+
+        sliderBar.attr('max', maxDepth)
+
+        node = svg.append('g')
+        .selectAll('g.node')
+        .data(filteredData)
+        .enter().append('g')
+        .attr('class', 'node')
+        .attr('transform', (d) -> 'translate(' + d.x + ',' + d.y + ')')
+        .append('svg')
+        .attr('class', 'inner-node')
+        .attr('width', (d) -> Math.max(0.01, d.dx - 1))
+        .attr('height', (d) -> Math.max(0.01, d.dy - 1))
+        .on('click', (d) -> if d.url then window.open(d.url))
 
 
-      node.append('rect')
-      .attr('width', (d) -> Math.max(0.01, d.dx - 1))
-      .attr('height', (d) -> Math.max(0.01, d.dy - 1))
-      .style('fill', (d) -> if d.children then color(d.name) else color(d.parent.name))
-      .style('stroke', 'white')
-      .style('stroke-width', '1px')
-      .on('mouseover', () ->
-        d3.select(@).append('title')
-        .text((d) ->
-          'Parent: ' + d.parent.name + '\n' +
-            'Name: ' + d.name + '\n' +
-            'Depth: ' + d.depth
-        )
-        d3.select(@)
-        .style('stroke', 'black')
-        .style('stroke-width', '3px')
-      )
-      .on('mouseout', () ->
-        d3.select(@)
+        node.append('rect')
+        .attr('width', (d) -> Math.max(0.01, d.dx - 1))
+        .attr('height', (d) -> Math.max(0.01, d.dy - 1))
+        .style('fill', (d) -> if d.children then color(d.name) else color(d.parent.name))
         .style('stroke', 'white')
         .style('stroke-width', '1px')
-        d3.select(@).select('title').remove()
+        .on('mouseover', () ->
+          d3.select(@).append('title')
+          .text((d) ->
+            'Parent: ' + d.parent.name + '\n' +
+              'Name: ' + d.name + '\n' +
+              'Depth: ' + d.depth
+          )
+          d3.select(@)
+          .style('stroke', 'black')
+          .style('stroke-width', '3px')
+        )
+        .on('mouseout', () ->
+          d3.select(@)
+          .style('stroke', 'white')
+          .style('stroke-width', '1px')
+          d3.select(@).select('title').remove()
+        )
+
+        # update slider value
+        $('#sliderText').remove()
+
+        container.append('text')
+        .attr('id', 'sliderText')
+        .text('Treemap depth: ' + sliderValue)
+        .attr('position', 'relative')
+        .attr('left', '50px')
+
+      plotTreemap(sliderValue, maxDepth) # default value of treemap depth
+
+      d3.select('#slider')
+      .on('change', () ->
+        sliderValue = parseInt this.value
+        plotTreemap(sliderValue, maxDepth)
       )
 
     drawTreemap: _drawTreemap
@@ -1606,7 +1644,7 @@ charts = angular.module('app_analysis_charts', [])
             when 'Area Chart'
               area.drawArea(height,width,_graph, data, gdata)
             when 'Treemap'
-              treemap.drawTreemap(svg, width, height, margin)
+              treemap.drawTreemap(svg, width, height, container)
             when 'Line Chart'
               line.lineChart(data,ranges,width,height,_graph, gdata)
 ]
