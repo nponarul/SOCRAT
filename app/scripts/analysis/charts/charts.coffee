@@ -86,6 +86,8 @@ charts = angular.module('app_analysis_charts', [])
       y: true
       z: false
       message: "Use option x to choose a numerical or categorical variable, or choose one categorical variable and one numerical variable."
+      xLabel: "Add x"
+      yLabel: "Add y"
     ,
       name: 'Scatter Plot'
       value: 1
@@ -93,6 +95,8 @@ charts = angular.module('app_analysis_charts', [])
       y: true
       z: false
       message: "Choose an x variable and a y variable."
+      xLabel: "Add x"
+      yLabel: "Add y"
     ,
       name: 'Histogram'
       value: 2
@@ -100,6 +104,7 @@ charts = angular.module('app_analysis_charts', [])
       y: false
       z: false
       message: "Choose an x variable. Use the slider below the histogram to adjust the number of bins."
+      xLabel: ""
     ,
       name: 'Bubble Chart'
       value: 3
@@ -107,6 +112,9 @@ charts = angular.module('app_analysis_charts', [])
       y: true
       z: true
       message: "Choose an x variable, a y variable and a radius variable."
+      xLabel: "Add x"
+      yLabel: "Add y"
+      zLabel: "Add radius"
     ,
       name: 'Pie Chart'
       value: 4
@@ -114,6 +122,7 @@ charts = angular.module('app_analysis_charts', [])
       y: false
       z: false
       message: "Choose one variable to put into a pie chart."
+      xLabel: ""
     ,
 
       name: 'Area Chart'
@@ -122,13 +131,18 @@ charts = angular.module('app_analysis_charts', [])
       y: true
       z: false
       message: "Pick date variable for x and numerical variable for y"
+      xLabel: "Add x (date)"
+      yLabel: "Add y"
     ,
       name: 'Stream Graph'
       value: 6
       x: true
       y: true
       z: true
-      message: "Choose two numerical variables"
+      message: "Pick date variable for x, a numerical variable for y, and a grouping key variable for z"
+      xLabel: "Add x (date)"
+      yLabel: "Add y"
+      zLabel: "Add key"
     ,
       name: 'Treemap'
       value: 7
@@ -143,6 +157,8 @@ charts = angular.module('app_analysis_charts', [])
       y: true
       z: false
       message: "Choose a continuous variable for x and a numerical variable for y"
+      xLabel: "Add x (date)"
+      yLabel: "Add y"
 
     ,
       name: 'Bivariate Area Chart'
@@ -151,6 +167,30 @@ charts = angular.module('app_analysis_charts', [])
       y: true
       z: true
       message: "Choose a date variable for x and two numerical variables for y and z"
+      xLabel: "Add x (date)"
+      yLabel: "Add y"
+      zLabel: "Add z"
+    ]
+
+    #add flag, that will make this array equal to $scope.graphs
+    _nestedGraphs = [
+      name: 'Stream Graph'
+      value: 6
+      x: true
+      y: true
+      z: true
+      message: "Pick date variable for x, a numerical variable for y, and a grouping key variable for z"
+      xLabel: "Add x (date)"
+      yLabel: "Add y"
+      zLabel: "Add key"
+    ,
+      name: 'Treemap'
+      value: 7
+      x: true
+      y: false
+      z: false
+      message: "Choose any variable to construct Treemap."
+      xLabel: ""
     ]
     $scope.graphSelect = {}
 

@@ -9,16 +9,16 @@ div(ng-controller="sideChartsCtrl")
       p X is a categorical variable
   div.form-inline
     div.form-horizontal(ng-show="graphSelect.x")
-      label(for = "x") Add X
+      label(for = "x") {{graphSelect.xLabel}}
       select#x.form-control(ng-change="changeVar(selector1,headers,'x');" ng-model="selector1" ng-options="v as v.value for v in headers")
     div.form-horizontal(ng-show="graphSelect.y")
-      label(for = "y") Add Y
+      label(for = "y") {{graphSelect.yLabel}}
       select#y.form-control(ng-change="changeVar(selector2,headers,'y');" ng-model="selector2" ng-options="v as v.value for v in headers")
       div(ng-show = "labelVar")
         input(ng-model="labelCheck" type="checkbox" id = "label")
         p Check if Y variable is the labels column
 
     div.form-horizontal(ng-show="graphSelect.z")
-      label(for = "z") Add Radius
+      label(for = "z") {{graphSelect.zLabel}}
       select#z.form-control(ng-change="changeVar(selector3,headers,'z');" ng-model="selector3" ng-options="v as v.value for v in headers")
 
