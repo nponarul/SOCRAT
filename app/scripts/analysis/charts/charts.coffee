@@ -57,6 +57,7 @@ charts = angular.module('app_analysis_charts', [])
 
 
 
+
 .controller('sideChartsCtrl',[
   'app_analysis_charts_manager'
   '$scope'
@@ -64,7 +65,12 @@ charts = angular.module('app_analysis_charts', [])
   '$stateParams'
   '$q'
   'app_analysis_charts_dataTransform'
-  (ctrlMngr, $scope, $rootScope, $stateParams, $q, dataTransform) ->
+  'app_analysis_charts_list'
+  'app_analysis_charts_nested'
+  'app_analysis_charts_time'
+  'app_analysis_charts_sendData'
+  'app_analysis_charts_checkTime'
+  (ctrlMngr, $scope, $rootScope, $stateParams, $q, dataTransform, list, nestList,timeList ,sendData,time) ->
     _chartData = null
     _headers = null
 
@@ -72,14 +78,104 @@ charts = angular.module('app_analysis_charts', [])
     $scope.selector2 = {}
     $scope.selector3 = {}
 
-
     $scope.graphInfo =
       graph: ""
       x: ""
       y: ""
       z: ""
 
-    $scope.graphs = [
+    $scope.graphs = list
+
+    $scope.graphSelect = {}
+
+    $scope.labelVar = false
+    $scope.labelCheck = null
+    $scope.changeName = () ->
+      $scope.graphInfo.graph = $scope.graphSelect.name
+      sendData.createGraph(_chartData,$scope.graphInfo,_headers,$rootScope)
+
+    $scope.changeVar = (selector,headers, ind) ->
+#if scope.graphInfo.graph is one of the time series ones, test variables for time format and only allow those when ind = x
+#only allow numerical ones for ind = y or z
+      for h in headers
+        if selector.value is h.value then $scope.graphInfo[ind] = parseFloat h.key
+      sendData.createGraph(_chartData,$scope.graphInfo,_headers,$rootScope)
+
+
+    sb = ctrlMngr.getSb()
+
+    headersX = []
+    #    if $scope.graphInfo.name in ['Area Chart', 'Stream Graph', 'Line Chart', 'Bivariate Area Chart'] and ind is 'x'
+
+    token = sb.subscribe
+      msg:'take table'
+      msgScope:['charts']
+      listener: (msg, _data) ->
+#        if _data.dataType? and _data.dataType is not DATA_TYPES.FLAT
+#          $scope.graphs = nestList
+#        else
+        _headers = d3.entries _data.header
+        $scope.headers = _headers
+        _chartData = dataTransform.format(_data.data)
+#        if time.checkForTime(_chartData)
+#          $scope.graphs = timeList
+#        for h in $scope.headers
+#          if time.checkDate(_chartData[parseFloat h.key])
+#            headersX.push h
+#        console.log headersX
+    sb.publish
+      msg:'get table'
+      msgScope:['charts']
+      callback: -> sb.unsubscribe token
+      data:
+        tableName: $stateParams.projectId + ':' + $stateParams.forkId
+])
+.service('app_analysis_charts_list', [
+  () ->
+
+#
+#    _getFlat = () ->
+#      flat = [
+#        name: 'Bar Graph'
+#        value: 0
+#        x: true
+#        y: true
+#        z: false
+#        message: "Use option x to choose a numerical or categorical variable, or choose one categorical variable and one numerical variable."
+#        xLabel: "Add x"
+#        yLabel: "Add y"
+#      ]
+#
+#    _getNested = () ->
+#      nested = [
+#        name: 'Stream Graph'
+#        value: 6
+#        x: true
+#        y: true
+#        z: true
+#        message: "Pick date variable for x, a numerical variable for y, and a grouping key variable for z"
+#        xLabel: "Add x (date)"
+#        yLabel: "Add y"
+#        zLabel: "Add key"
+#      ]
+#
+#    _getTime = () ->
+#      time = [
+#        name: 'Area Chart'
+#        value: 5
+#        x: true
+#        y: true
+#        z: false
+#        message: "Pick date variable for x and numerical variable for y"
+#        xLabel: "Add x (date)"
+#        yLabel: "Add y"
+#      ]
+#
+#    flat: _getFlat
+#    nested: _getNested
+#    time: _getTime
+
+    graphs = [
       name: 'Bar Graph'
       value: 0
       x: true
@@ -124,16 +220,6 @@ charts = angular.module('app_analysis_charts', [])
       message: "Choose one variable to put into a pie chart."
       xLabel: ""
     ,
-
-      name: 'Area Chart'
-      value: 5
-      x: true
-      y: true
-      z: false
-      message: "Pick date variable for x and numerical variable for y"
-      xLabel: "Add x (date)"
-      yLabel: "Add y"
-    ,
       name: 'Stream Graph'
       value: 6
       x: true
@@ -170,10 +256,24 @@ charts = angular.module('app_analysis_charts', [])
       xLabel: "Add x (date)"
       yLabel: "Add y"
       zLabel: "Add z"
+    ,
+
+      name: 'Area Chart'
+      value: 5
+      x: true
+      y: true
+      z: false
+      message: "Pick date variable for x and numerical variable for y"
+      xLabel: "Add x (date)"
+      yLabel: "Add y"
+
     ]
 
-    #add flag, that will make this array equal to $scope.graphs
-    _nestedGraphs = [
+])
+
+.service('app_analysis_charts_nested', [
+  () ->
+    graphs = [
       name: 'Stream Graph'
       value: 6
       x: true
@@ -189,86 +289,104 @@ charts = angular.module('app_analysis_charts', [])
       x: true
       y: false
       z: false
-      message: "Choose any variable to construct Treemap."
-      xLabel: ""
+      message: "Choose any variable to construct Treemap. Use the slider below the treemap to adjust the depth of the Treemap."
     ]
-    $scope.graphSelect = {}
 
+])
 
+.service('app_analysis_charts_time', [
+  () ->
+    graphs = [
+      name: 'Stream Graph'
+      value: 6
+      x: true
+      y: true
+      z: true
+      message: "Pick date variable for x, a numerical variable for y, and a grouping key variable for z"
+      xLabel: "Add x (date)"
+      yLabel: "Add y"
+      zLabel: "Add key"
+    ,
 
-    $scope.createGraph = () ->
+      name: 'Line Chart'
+      value: 8
+      x: true
+      y: true
+      z: false
+      message: "Choose a continuous variable for x and a numerical variable for y"
+      xLabel: "Add x (date)"
+      yLabel: "Add y"
+
+    ,
+      name: 'Bivariate Area Chart'
+      value: 9
+      x: true
+      y: true
+      z: true
+      message: "Choose a date variable for x and two numerical variables for y and z"
+      xLabel: "Add x (date)"
+      yLabel: "Add y"
+      zLabel: "Add z"
+    ,
+
+      name: 'Area Chart'
+      value: 5
+      x: true
+      y: true
+      z: false
+      message: "Pick date variable for x and numerical variable for y"
+      xLabel: "Add x (date)"
+      yLabel: "Add y"
+    ]
+
+])
+
+.factory('app_analysis_charts_sendData', [
+  () ->
+    _createGraph = (chartData,graphInfo,headers,$rootScope) ->
       graphFormat = () ->
         obj = []
-        len = _chartData[0].length
+        len = chartData[0].length
 
-        if $scope.graphInfo.y is "" and $scope.graphInfo.z is ""
+        if graphInfo.y is "" and graphInfo.z is ""
           obj = []
 
-          for i in [1...len] by 1
+          for i in [0...len] by 1
             tmp =
-              x:  _chartData[$scope.graphInfo.x][i].value
+              x:  chartData[graphInfo.x][i].value
             obj.push tmp
 
-        else if $scope.graphInfo.y isnt "" and $scope.graphInfo.z is ""
+        else if graphInfo.y isnt "" and graphInfo.z is ""
           obj = []
 
-          for i in [1...len] by 1
+          for i in [0...len] by 1
             tmp =
-              x:  _chartData[$scope.graphInfo.x][i].value
-              y:  _chartData[$scope.graphInfo.y][i].value
+              x:  chartData[graphInfo.x][i].value
+              y:  chartData[graphInfo.y][i].value
             obj.push tmp
 
         else
           obj = []
 
-          for i in [1...len] by 1
+          for i in [0...len] by 1
             tmp =
-              x:  _chartData[$scope.graphInfo.x][i].value
-              y:  _chartData[$scope.graphInfo.y][i].value
-              z:  _chartData[$scope.graphInfo.z][i].value
+              x:  chartData[graphInfo.x][i].value
+              y:  chartData[graphInfo.y][i].value
+              z:  chartData[graphInfo.z][i].value
             obj.push tmp
 
         return obj
       send = graphFormat()
       results =
         data: send
-        xLab: _headers[$scope.graphInfo.x],
-        yLab: _headers[$scope.graphInfo.y],
-        zLab: _headers[$scope.graphInfo.z],
-        name: $scope.graphInfo.graph
+        xLab: headers[graphInfo.x],
+        yLab: headers[graphInfo.y],
+        zLab: headers[graphInfo.z],
+        name: graphInfo.graph
 
       $rootScope.$broadcast 'charts:graphDiv', results
 
-    $scope.labelVar = false
-    $scope.labelCheck = null
-    $scope.changeName = () ->
-      $scope.graphInfo.graph = $scope.graphSelect.name
-
-
-      $scope.createGraph()
-
-    $scope.changeVar = (selector,headers, ind) ->
-      for h in headers
-        if selector.value is h.value then $scope.graphInfo[ind] = parseFloat h.key
-      $scope.createGraph()
-
-
-    sb = ctrlMngr.getSb()
-
-    token = sb.subscribe
-      msg:'take table'
-      msgScope:['charts']
-      listener: (msg, _data) ->
-        _headers = d3.entries _data.header
-        $scope.headers = _headers
-        _chartData = dataTransform.format(_data.data)
-
-    sb.publish
-      msg:'get table'
-      msgScope:['charts']
-      callback: -> sb.unsubscribe token
-      data:
-        tableName: $stateParams.projectId + ':' + $stateParams.forkId
+    createGraph: _createGraph
 ])
 
 .factory('app_analysis_charts_dataTransform',[
@@ -292,14 +410,45 @@ charts = angular.module('app_analysis_charts', [])
     format: _format
 ])
 
+.factory 'app_analysis_charts_checkTime',[
+  () ->
+#check if variable is date
+    formats = [
+      "MM/DD/YYYY",
+      "L",
+      "l",
+      "DD-MMM-YY",
+      "DDD-MMM-YYYY"
+    ]
+
+    isDate = (date) ->
+#      console.log new Date date instanceof Date
+      console.log moment(date,formats,true)
+
+    #for each array of data, returns false if it finds non-date
+    _checkDate = (data) ->
+      for d in data
+        if !isDate d
+          return false
+          break
+
+    _checkForTime = (data) ->
+      for d in data
+        _checkDate(d)
+
+    checkDate:_checkDate
+    checkForTime: _checkForTime
+]
+
+
 .factory 'line', [
   () ->
     _lineChart = (data,ranges,width,height,_graph, gdata,container) ->
-      formatDate = d3.time.format("%d-%b-%y")
+#      formatDate = d3.time.format("%d-%b-%y")
       bisectDate = d3.bisector((d) -> d.x).left
 
       for d in data
-        d.x = formatDate.parse(d.x)
+        d.x = new Date d.x
         d.y = +d.y
 
       x = d3.time.scale()
@@ -401,7 +550,7 @@ charts = angular.module('app_analysis_charts', [])
   () ->
 
     _streamGraph = (data,ranges,width,height,_graph) ->
-      parseDate = d3.time.format("%m/%d/%y").parse
+#      parseDate = d3.time.format("%d-%b-%y").parse
       #console.log parseDate data[0].x
 
       x = d3.time.scale()
@@ -416,7 +565,7 @@ charts = angular.module('app_analysis_charts', [])
       xAxis = d3.svg.axis()
       .scale(x)
       .orient("bottom")
-      .ticks(d3.time.weeks)
+#      .ticks(d3.time.weeks)
 
       yAxis = d3.svg.axis()
       .scale(y)
@@ -429,7 +578,7 @@ charts = angular.module('app_analysis_charts', [])
 
       nest = d3.nest().key (d) -> d.z
 
-      #console.log data
+      console.log data
 
       area = d3.svg.area()
       .interpolate("cardinal")
@@ -438,9 +587,10 @@ charts = angular.module('app_analysis_charts', [])
       .y1((d)->y(d.y0 + d.y))
 
       for d in data
-        d.x = parseDate d.x
+        d.x = new Date d.x
         d.y = +d.y
 
+      console.log nest.entries(data)
 
       layers = stack(nest.entries(data))
 
@@ -1021,10 +1171,10 @@ charts = angular.module('app_analysis_charts', [])
 .factory 'area',[
   ()->
     _drawArea = (height,width,_graph, data,gdata) ->
-      parseDate = d3.time.format("%d-%b-%y").parse
+#      parseDate = d3.time.format("%d-%b-%y").parse
 
       for d in data
-        d.x = parseDate d.x
+        d.x = new Date d.x
         d.y = +d.y
       x = d3.time.scale().range([ 0, width ])
       y = d3.scale.linear().range([ height, 0 ])
@@ -1649,7 +1799,7 @@ charts = angular.module('app_analysis_charts', [])
 .factory 'bivariate', [
   () ->
     _bivariateChart = (height,width,_graph, data, gdata) ->
-      parseDate = d3.time.format("%Y%m%d").parse
+#      parseDate = d3.time.format("%d-%b-%y").parse
 
       x = d3.time.scale()
       .range([0, width])
@@ -1671,7 +1821,7 @@ charts = angular.module('app_analysis_charts', [])
       .y1((d) -> y(d.z))
 
       for d in data
-        d.x = parseDate d.x
+        d.x = new Date d.x
         d.y = +d.y
         d.z = +d.z
 
@@ -1729,15 +1879,7 @@ charts = angular.module('app_analysis_charts', [])
       gdata = null
       ranges = null
 
-      #check if variable is date
-      isDate = (date) ->
-        date instanceof Date
-      checkDate = (data) ->
-#checks x value of each to see if its a date
-        for d in data
-          if !isDate d.x
-            return false
-            break
+
 
       scope.$watch 'chartData', (newChartData) ->
         if newChartData
@@ -1757,6 +1899,8 @@ charts = angular.module('app_analysis_charts', [])
             yMax: d3.max data, (d) -> parseFloat d.y
 
 
+          console.log data
+
           switch gdata.name
             when 'Bar Graph'
               bar.drawBar(width,height,data,_graph,gdata)
@@ -1770,15 +1914,22 @@ charts = angular.module('app_analysis_charts', [])
             when 'Scatter Plot'
               scatterPlot.drawScatterPlot(data,ranges,width,height,_graph,container,gdata)
             when 'Stream Graph'
+#              if not checkDate(data)
+#                alert "x is not a date variable"
               streamGraph.streamGraph(data,ranges,width,height,_graph)
             when 'Area Chart'
-              if not checkDate(data)
-                alert "x is not a date variable"
+#              if not checkDate(data)
+#                alert "x is not a date variable"
               area.drawArea(height,width,_graph, data, gdata)
             when 'Treemap'
               treemap.drawTreemap(svg, width, height, container)
             when 'Line Chart'
+#              if not checkDate(data)
+#                alert "x is not a date variable"
               line.lineChart(data,ranges,width,height,_graph, gdata,container)
             when 'Bivariate Area Chart'
+#              if not checkDate(data)
+#                alert "x is not a date variable"
               bivariate.bivariateChart(height,width,_graph, data, gdata)
+
 ]
