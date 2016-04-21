@@ -66,11 +66,12 @@ charts = angular.module('app_analysis_charts', [])
   '$q'
   'app_analysis_charts_dataTransform'
   'app_analysis_charts_list'
+  'app_analysis_charts_flat'
   'app_analysis_charts_nested'
   'app_analysis_charts_time'
   'app_analysis_charts_sendData'
   'app_analysis_charts_checkTime'
-  (ctrlMngr, $scope, $rootScope, $stateParams, $q, dataTransform, list, nestList,timeList ,sendData,time) ->
+  (ctrlMngr, $scope, $rootScope, $stateParams, $q, dataTransform, list, flat, nestList, timeList ,sendData, time) ->
     _chartData = null
     _headers = null
 
@@ -111,12 +112,25 @@ charts = angular.module('app_analysis_charts', [])
       msg:'take table'
       msgScope:['charts']
       listener: (msg, _data) ->
+        switch _data.dataType
+          when "FLAT"
+            $scope.graphs = flat
+            _headers = d3.entries _data.header
+            $scope.headers = _headers
+            _chartData = dataTransform.format(_data.data)
+          when "NESTED"
+            $scope.graphs = nestList
+            $scope.header = {key: 0, value: "nestData"}
+
+
+
+
 #        if _data.dataType? and _data.dataType is not DATA_TYPES.FLAT
 #          $scope.graphs = nestList
 #        else
-        _headers = d3.entries _data.header
-        $scope.headers = _headers
-        _chartData = dataTransform.format(_data.data)
+
+
+
 #        if time.checkForTime(_chartData)
 #          $scope.graphs = timeList
 #        for h in $scope.headers
@@ -130,6 +144,7 @@ charts = angular.module('app_analysis_charts', [])
       data:
         tableName: $stateParams.projectId + ':' + $stateParams.forkId
 ])
+
 .service('app_analysis_charts_list', [
   () ->
 
@@ -235,8 +250,90 @@ charts = angular.module('app_analysis_charts', [])
       x: true
       y: false
       z: false
-      message: "Choose any variable to construct Treemap. Use the slider below the treemap to adjust the depth of the Treemap."
+      message: ""
     ,
+      name: 'Line Chart'
+      value: 8
+      x: true
+      y: true
+      z: false
+      message: "Choose a continuous variable for x and a numerical variable for y"
+      xLabel: "Add x (date)"
+      yLabel: "Add y"
+
+    ,
+      name: 'Bivariate Area Chart'
+      value: 9
+      x: true
+      y: true
+      z: true
+      message: "Choose a date variable for x and two numerical variables for y and z"
+      xLabel: "Add x (date)"
+      yLabel: "Add y"
+      zLabel: "Add z"
+    ,
+
+      name: 'Area Chart'
+      value: 5
+      x: true
+      y: true
+      z: false
+      message: "Pick date variable for x and numerical variable for y"
+      xLabel: "Add x (date)"
+      yLabel: "Add y"
+
+    ]
+
+])
+
+.service('app_analysis_charts_flat', [
+  () ->
+    graphs = [
+      name: 'Bar Graph'
+      value: 0
+      x: true
+      y: true
+      z: false
+      message: "Use option x to choose a numerical or categorical variable, or choose one categorical variable and one numerical variable."
+      xLabel: "Add x"
+      yLabel: "Add y"
+    ,
+      name: 'Scatter Plot'
+      value: 1
+      x: true
+      y: true
+      z: false
+      message: "Choose an x variable and a y variable."
+      xLabel: "Add x"
+      yLabel: "Add y"
+    ,
+      name: 'Histogram'
+      value: 2
+      x: true
+      y: false
+      z: false
+      message: "Choose an x variable. Use the slider below the histogram to adjust the number of bins."
+      xLabel: ""
+    ,
+      name: 'Bubble Chart'
+      value: 3
+      x: true
+      y: true
+      z: true
+      message: "Choose an x variable, a y variable and a radius variable."
+      xLabel: "Add x"
+      yLabel: "Add y"
+      zLabel: "Add radius"
+    ,
+      name: 'Pie Chart'
+      value: 4
+      x: true
+      y: false
+      z: false
+      message: "Choose one variable to put into a pie chart."
+      xLabel: ""
+    ,
+
       name: 'Line Chart'
       value: 8
       x: true
@@ -289,7 +386,7 @@ charts = angular.module('app_analysis_charts', [])
       x: true
       y: false
       z: false
-      message: "Choose any variable to construct Treemap. Use the slider below the treemap to adjust the depth of the Treemap."
+      message: ""
     ]
 
 ])
@@ -849,7 +946,6 @@ charts = angular.module('app_analysis_charts', [])
 
 #testing
       nest = d3.nest().key (d) -> d.z
-      console.log nest.entries data
 
       x = d3.scale.linear().domain([ranges.xMin,ranges.xMax]).range([ 0, width ])
       y = d3.scale.linear().domain([ranges.yMin,ranges.yMax]).range([ height, 0 ])
@@ -1865,7 +1961,7 @@ charts = angular.module('app_analysis_charts', [])
   'treemap',
   'line',
   'bivariate'
-  (scatterPlot,histogram,pie,bubble,bar,streamGraph, area, treemap,line,bivariate) ->
+  (scatterPlot, histogram, pie, bubble, bar, streamGraph, area, treemap, line, bivariate) ->
     restrict: 'E'
     template: "<div class='graph-container' style='height: 600px'></div>"
     link: (scope, elem, attr) ->
@@ -1897,9 +1993,6 @@ charts = angular.module('app_analysis_charts', [])
 
             xMax: d3.max data, (d) -> parseFloat d.x
             yMax: d3.max data, (d) -> parseFloat d.y
-
-
-          console.log data
 
           switch gdata.name
             when 'Bar Graph'
