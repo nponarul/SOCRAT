@@ -117,6 +117,8 @@ charts = angular.module('app_analysis_charts', [])
         _headers = d3.entries _data.header
         $scope.headers = _headers
         _chartData = dataTransform.format(_data.data)
+        console.log time.checkForTime(_chartData)
+        console.log _chartData
 #        if time.checkForTime(_chartData)
 #          $scope.graphs = timeList
 #        for h in $scope.headers
@@ -415,28 +417,30 @@ charts = angular.module('app_analysis_charts', [])
 #check if variable is date
     formats = [
       "MM/DD/YYYY",
+      "M/DD/YYYY",
+      "M/D/YYYY",
+      "MM/DD/YY",
+      "M/DD/YY",
+      "M/D/YY",
       "L",
       "l",
       "DD-MMM-YY",
+      "D-MMM-YY",
       "DDD-MMM-YYYY"
     ]
 
-    isDate = (date) ->
-#      console.log new Date date instanceof Date
-      console.log moment(date,formats,true)
-
-    #for each array of data, returns false if it finds non-date
-    _checkDate = (data) ->
-      for d in data
-        if !isDate d
-          return false
-          break
+    #determines if an array is a date variable
+    arrayDate = (array) ->
+      console.log array
+      for i in [0...array.length] by 1
+#        if not
+        console.log moment(array[i].value,formats,true).isValid()
+        return false unless moment(array[i].value,formats,true).isValid()
+      true
 
     _checkForTime = (data) ->
-      for d in data
-        _checkDate(d)
-
-    checkDate:_checkDate
+      console.log data.filter(arrayDate)
+      data.filter(arrayDate)
     checkForTime: _checkForTime
 ]
 
