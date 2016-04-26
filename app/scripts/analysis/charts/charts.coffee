@@ -66,11 +66,9 @@ charts = angular.module('app_analysis_charts', [])
   '$q'
   'app_analysis_charts_dataTransform'
   'app_analysis_charts_list'
-  'app_analysis_charts_nested'
-  'app_analysis_charts_time'
   'app_analysis_charts_sendData'
   'app_analysis_charts_checkTime'
-  (ctrlMngr, $scope, $rootScope, $stateParams, $q, dataTransform, list, nestList,timeList ,sendData,time) ->
+  (ctrlMngr, $scope, $rootScope, $stateParams, $q, dataTransform, list, sendData,time) ->
     _chartData = null
     _headers = null
 
@@ -84,7 +82,7 @@ charts = angular.module('app_analysis_charts', [])
       y: ""
       z: ""
 
-    $scope.graphs = list
+    $scope.graphs = list.flat()
 
     $scope.graphSelect = {}
 
@@ -111,20 +109,12 @@ charts = angular.module('app_analysis_charts', [])
       msg:'take table'
       msgScope:['charts']
       listener: (msg, _data) ->
-#        if _data.dataType? and _data.dataType is not DATA_TYPES.FLAT
-#          $scope.graphs = nestList
-#        else
         _headers = d3.entries _data.header
         $scope.headers = _headers
         _chartData = dataTransform.format(_data.data)
-        console.log time.checkForTime(_chartData)
-        console.log _chartData
-#        if time.checkForTime(_chartData)
-#          $scope.graphs = timeList
-#        for h in $scope.headers
-#          if time.checkDate(_chartData[parseFloat h.key])
-#            headersX.push h
-#        console.log headersX
+        if time.checkForTime(_chartData)
+          $scope.graphs = list.time()
+
     sb.publish
       msg:'get table'
       msgScope:['charts']
@@ -132,216 +122,171 @@ charts = angular.module('app_analysis_charts', [])
       data:
         tableName: $stateParams.projectId + ':' + $stateParams.forkId
 ])
-.service('app_analysis_charts_list', [
+.factory('app_analysis_charts_list', [
   () ->
 
-#
-#    _getFlat = () ->
-#      flat = [
-#        name: 'Bar Graph'
-#        value: 0
-#        x: true
-#        y: true
-#        z: false
-#        message: "Use option x to choose a numerical or categorical variable, or choose one categorical variable and one numerical variable."
-#        xLabel: "Add x"
-#        yLabel: "Add y"
-#      ]
-#
-#    _getNested = () ->
-#      nested = [
-#        name: 'Stream Graph'
-#        value: 6
-#        x: true
-#        y: true
-#        z: true
-#        message: "Pick date variable for x, a numerical variable for y, and a grouping key variable for z"
-#        xLabel: "Add x (date)"
-#        yLabel: "Add y"
-#        zLabel: "Add key"
-#      ]
-#
-#    _getTime = () ->
-#      time = [
-#        name: 'Area Chart'
-#        value: 5
-#        x: true
-#        y: true
-#        z: false
-#        message: "Pick date variable for x and numerical variable for y"
-#        xLabel: "Add x (date)"
-#        yLabel: "Add y"
-#      ]
-#
-#    flat: _getFlat
-#    nested: _getNested
-#    time: _getTime
 
-    graphs = [
-      name: 'Bar Graph'
-      value: 0
-      x: true
-      y: true
-      z: false
-      message: "Use option x to choose a numerical or categorical variable, or choose one categorical variable and one numerical variable."
-      xLabel: "Add x"
-      yLabel: "Add y"
-    ,
-      name: 'Scatter Plot'
-      value: 1
-      x: true
-      y: true
-      z: false
-      message: "Choose an x variable and a y variable."
-      xLabel: "Add x"
-      yLabel: "Add y"
-    ,
-      name: 'Histogram'
-      value: 2
-      x: true
-      y: false
-      z: false
-      message: "Choose an x variable. Use the slider below the histogram to adjust the number of bins."
-      xLabel: ""
-    ,
-      name: 'Bubble Chart'
-      value: 3
-      x: true
-      y: true
-      z: true
-      message: "Choose an x variable, a y variable and a radius variable."
-      xLabel: "Add x"
-      yLabel: "Add y"
-      zLabel: "Add radius"
-    ,
-      name: 'Pie Chart'
-      value: 4
-      x: true
-      y: false
-      z: false
-      message: "Choose one variable to put into a pie chart."
-      xLabel: ""
-    ,
-      name: 'Stream Graph'
-      value: 6
-      x: true
-      y: true
-      z: true
-      message: "Pick date variable for x, a numerical variable for y, and a grouping key variable for z"
-      xLabel: "Add x (date)"
-      yLabel: "Add y"
-      zLabel: "Add key"
-    ,
-      name: 'Treemap'
-      value: 7
-      x: true
-      y: false
-      z: false
-      message: "Choose any variable to construct Treemap. Use the slider below the treemap to adjust the depth of the Treemap."
-    ,
-      name: 'Line Chart'
-      value: 8
-      x: true
-      y: true
-      z: false
-      message: "Choose a continuous variable for x and a numerical variable for y"
-      xLabel: "Add x (date)"
-      yLabel: "Add y"
+    _getFlat = () ->
+      flat = [
+        name: 'Bar Graph'
+        value: 0
+        x: true
+        y: true
+        z: false
+        message: "Use option x to choose a numerical or categorical variable, or choose one categorical variable and one numerical variable."
+        xLabel: "Add x"
+        yLabel: "Add y"
+      ,
+        name: 'Scatter Plot'
+        value: 1
+        x: true
+        y: true
+        z: false
+        message: "Choose an x variable and a y variable."
+        xLabel: "Add x"
+        yLabel: "Add y"
+      ,
+        name: 'Histogram'
+        value: 2
+        x: true
+        y: false
+        z: false
+        message: "Choose an x variable. Use the slider below the histogram to adjust the number of bins."
+        xLabel: ""
+      ,
+        name: 'Bubble Chart'
+        value: 3
+        x: true
+        y: true
+        z: true
+        message: "Choose an x variable, a y variable and a radius variable."
+        xLabel: "Add x"
+        yLabel: "Add y"
+        zLabel: "Add radius"
+      ,
+        name: 'Pie Chart'
+        value: 4
+        x: true
+        y: false
+        z: false
+        message: "Choose one variable to put into a pie chart."
+        xLabel: ""
 
-    ,
-      name: 'Bivariate Area Chart'
-      value: 9
-      x: true
-      y: true
-      z: true
-      message: "Choose a date variable for x and two numerical variables for y and z"
-      xLabel: "Add x (date)"
-      yLabel: "Add y"
-      zLabel: "Add z"
-    ,
+      ]
 
-      name: 'Area Chart'
-      value: 5
-      x: true
-      y: true
-      z: false
-      message: "Pick date variable for x and numerical variable for y"
-      xLabel: "Add x (date)"
-      yLabel: "Add y"
+    _getNested = () ->
+      nested = [
+        name: 'Stream Graph'
+        value: 6
+        x: true
+        y: true
+        z: true
+        message: "Pick date variable for x, a numerical variable for y, and a grouping key variable for z"
+        xLabel: "Add x (date)"
+        yLabel: "Add y"
+        zLabel: "Add key"
+      ,
+        name: 'Treemap'
+        value: 7
+        x: true
+        y: false
+        z: false
+        message: "Choose any variable to construct Treemap. Use the slider below the treemap to adjust the depth of the Treemap."
+      ]
 
-    ]
+    _getTime = () ->
+      time = [
+        name: 'Area Chart'
+        value: 5
+        x: true
+        y: true
+        z: false
+        message: "Pick date variable for x and numerical variable for y"
+        xLabel: "Add x (date)"
+        yLabel: "Add y"
+      ,
+        name: 'Line Chart'
+        value: 8
+        x: true
+        y: true
+        z: false
+        message: "Choose a continuous variable for x and a numerical variable for y"
+        xLabel: "Add x (date)"
+        yLabel: "Add y"
+      ,
+        name: 'Bivariate Area Chart'
+        value: 9
+        x: true
+        y: true
+        z: true
+        message: "Choose a date variable for x and two numerical variables for y and z"
+        xLabel: "Add x (date)"
+        yLabel: "Add y"
+        zLabel: "Add z"
+      ,
+        name: 'Stream Graph'
+        value: 6
+        x: true
+        y: true
+        z: true
+        message: "Pick date variable for x, a numerical variable for y, and a grouping key variable for z"
+        xLabel: "Add x (date)"
+        yLabel: "Add y"
+        zLabel: "Add key"
+      ,
+        name: 'Bar Graph'
+        value: 0
+        x: true
+        y: true
+        z: false
+        message: "Use option x to choose a numerical or categorical variable, or choose one categorical variable and one numerical variable."
+        xLabel: "Add x"
+        yLabel: "Add y"
+      ,
+        name: 'Scatter Plot'
+        value: 1
+        x: true
+        y: true
+        z: false
+        message: "Choose an x variable and a y variable."
+        xLabel: "Add x"
+        yLabel: "Add y"
+      ,
+        name: 'Histogram'
+        value: 2
+        x: true
+        y: false
+        z: false
+        message: "Choose an x variable. Use the slider below the histogram to adjust the number of bins."
+        xLabel: ""
+      ,
+        name: 'Bubble Chart'
+        value: 3
+        x: true
+        y: true
+        z: true
+        message: "Choose an x variable, a y variable and a radius variable."
+        xLabel: "Add x"
+        yLabel: "Add y"
+        zLabel: "Add radius"
+      ,
+        name: 'Pie Chart'
+        value: 4
+        x: true
+        y: false
+        z: false
+        message: "Choose one variable to put into a pie chart."
+        xLabel: ""
+      ]
+
+
+    flat: _getFlat
+    nested: _getNested
+    time: _getTime
+
 
 ])
 
-.service('app_analysis_charts_nested', [
-  () ->
-    graphs = [
-      name: 'Stream Graph'
-      value: 6
-      x: true
-      y: true
-      z: true
-      message: "Pick date variable for x, a numerical variable for y, and a grouping key variable for z"
-      xLabel: "Add x (date)"
-      yLabel: "Add y"
-      zLabel: "Add key"
-    ,
-      name: 'Treemap'
-      value: 7
-      x: true
-      y: false
-      z: false
-      message: "Choose any variable to construct Treemap. Use the slider below the treemap to adjust the depth of the Treemap."
-    ]
-
-])
-
-.service('app_analysis_charts_time', [
-  () ->
-    graphs = [
-      name: 'Stream Graph'
-      value: 6
-      x: true
-      y: true
-      z: true
-      message: "Pick date variable for x, a numerical variable for y, and a grouping key variable for z"
-      xLabel: "Add x (date)"
-      yLabel: "Add y"
-      zLabel: "Add key"
-    ,
-
-      name: 'Line Chart'
-      value: 8
-      x: true
-      y: true
-      z: false
-      message: "Choose a continuous variable for x and a numerical variable for y"
-      xLabel: "Add x (date)"
-      yLabel: "Add y"
-
-    ,
-      name: 'Bivariate Area Chart'
-      value: 9
-      x: true
-      y: true
-      z: true
-      message: "Choose a date variable for x and two numerical variables for y and z"
-      xLabel: "Add x (date)"
-      yLabel: "Add y"
-      zLabel: "Add z"
-    ,
-
-      name: 'Area Chart'
-      value: 5
-      x: true
-      y: true
-      z: false
-      message: "Pick date variable for x and numerical variable for y"
-      xLabel: "Add x (date)"
-      yLabel: "Add y"
-    ]
-
-])
 
 .factory('app_analysis_charts_sendData', [
   () ->
@@ -431,17 +376,24 @@ charts = angular.module('app_analysis_charts', [])
 
     #determines if an array is a date variable
     arrayDate = (array) ->
-      console.log array
       for i in [0...array.length] by 1
-#        if not
-        console.log moment(array[i].value,formats,true).isValid()
         return false unless moment(array[i].value,formats,true).isValid()
       true
 
-    _checkForTime = (data) ->
-      console.log data.filter(arrayDate)
+    checkData = (data) ->
       data.filter(arrayDate)
+    _checkForTime = (data) ->
+      if checkData(data).length is 0
+        return false
+      true
+
+    _checkTimeChoice = (data) ->
+      time = data.map (d) ->
+        d.x
+      alert "x is not a time variable" unless arrayDate d3.entries time
+
     checkForTime: _checkForTime
+    checkTimeChoice: _checkTimeChoice
 ]
 
 
@@ -1868,8 +1820,9 @@ charts = angular.module('app_analysis_charts', [])
   'area',
   'treemap',
   'line',
-  'bivariate'
-  (scatterPlot,histogram,pie,bubble,bar,streamGraph, area, treemap,line,bivariate) ->
+  'bivariate',
+  'app_analysis_charts_checkTime'
+  (scatterPlot,histogram,pie,bubble,bar,streamGraph, area, treemap,line,bivariate, time) ->
     restrict: 'E'
     template: "<div class='graph-container' style='height: 600px'></div>"
     link: (scope, elem, attr) ->
@@ -1903,8 +1856,6 @@ charts = angular.module('app_analysis_charts', [])
             yMax: d3.max data, (d) -> parseFloat d.y
 
 
-          console.log data
-
           switch gdata.name
             when 'Bar Graph'
               bar.drawBar(width,height,data,_graph,gdata)
@@ -1918,22 +1869,18 @@ charts = angular.module('app_analysis_charts', [])
             when 'Scatter Plot'
               scatterPlot.drawScatterPlot(data,ranges,width,height,_graph,container,gdata)
             when 'Stream Graph'
-#              if not checkDate(data)
-#                alert "x is not a date variable"
+              time.checkTimeChoice(data)
               streamGraph.streamGraph(data,ranges,width,height,_graph)
             when 'Area Chart'
-#              if not checkDate(data)
-#                alert "x is not a date variable"
+              time.checkTimeChoice(data)
               area.drawArea(height,width,_graph, data, gdata)
             when 'Treemap'
               treemap.drawTreemap(svg, width, height, container)
             when 'Line Chart'
-#              if not checkDate(data)
-#                alert "x is not a date variable"
+              time.checkTimeChoice(data)
               line.lineChart(data,ranges,width,height,_graph, gdata,container)
             when 'Bivariate Area Chart'
-#              if not checkDate(data)
-#                alert "x is not a date variable"
+              time.checkTimeChoice(data)
               bivariate.bivariateChart(height,width,_graph, data, gdata)
 
 ]
