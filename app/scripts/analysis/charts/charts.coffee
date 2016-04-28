@@ -112,6 +112,7 @@ charts = angular.module('app_analysis_charts', [])
       msg:'take table'
       msgScope:['charts']
       listener: (msg, _data) ->
+        console.log _data
         switch _data.dataType
           when "FLAT"
             $scope.graphs = flat
