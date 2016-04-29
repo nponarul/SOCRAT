@@ -89,7 +89,7 @@ charts = angular.module('app_analysis_charts', [])
 
     $scope.changeName = () ->
       $scope.graphInfo.graph = $scope.graphSelect.name
-      if $scope.dataType = "NESTED"
+      if $scope.dataType is "NESTED"
         $scope.graphInfo.x = "initiate"
         sendData.createGraph($scope.data, $scope.graphInfo, {key: 0, value: "initiate"}, $rootScope, $scope.dataType)
       else
@@ -123,7 +123,7 @@ charts = angular.module('app_analysis_charts', [])
           when "NESTED"
             $scope.graphs = list.nested()
             $scope.data = _data.data
-            $scope.dataType = _data.dataType
+            $scope.dataType = "NESTED"
             #$scope.header = {key: 0, value: "initiate"}
 
     sb.publish
@@ -302,8 +302,10 @@ charts = angular.module('app_analysis_charts', [])
   () ->
     _createGraph = (chartData, graphInfo, headers, $rootScope, dataType) ->
       graphFormat = () ->
-        if dataType = "NESTED"
-          return chartData
+        console.log "dataType"
+        console.log dataType
+
+        if dataType is "NESTED" then return chartData
         else # dataType = "FLAT"
           obj = []
           len = chartData[0].length
