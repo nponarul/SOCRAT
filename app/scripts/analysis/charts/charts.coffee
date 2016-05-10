@@ -321,9 +321,6 @@ charts = angular.module('app_analysis_charts', [])
   () ->
     _createGraph = (chartData, graphInfo, headers, $rootScope, dataType, scheme_input) ->
       graphFormat = () ->
-        console.log "dataType"
-        console.log dataType
-
         if dataType is "NESTED" then return chartData
         else # dataType = "FLAT"
           obj = []
@@ -1229,6 +1226,16 @@ charts = angular.module('app_analysis_charts', [])
       maxDepth = 5
       sliderValue = 3
 
+      svg.selectAll('g').remove()
+
+      title = svg.append('text')
+      .attr('transform', 'translate(0, 20)')
+      .attr('width', '100%')
+      .text(() -> if (data.name != null) then data.name else '')
+      .attr('color', 'balck')
+      .attr('font-size', 15)
+
+
       sliderBar = container.append('input')
       .attr('id', 'slider')
       .attr('type', 'range')
@@ -1258,6 +1265,7 @@ charts = angular.module('app_analysis_charts', [])
         sliderBar.attr('max', maxDepth)
 
         node = svg.append('g')
+        .attr('transform', 'translate(0, 35)')
         .selectAll('g.node')
         .data(filteredData)
         .enter().append('g')
@@ -1278,11 +1286,7 @@ charts = angular.module('app_analysis_charts', [])
         .style('stroke-width', '1px')
         .on('mouseover', () ->
           d3.select(@).append('title')
-          .text((d) ->
-            'Parent: ' + d.parent.name + '\n' +
-              'Name: ' + d.name + '\n' +
-              'Depth: ' + d.depth
-          )
+          .text((d) -> d.name )
           d3.select(@)
           .style('stroke', 'black')
           .style('stroke-width', '3px')
