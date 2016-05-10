@@ -75,6 +75,19 @@ charts = angular.module('app_analysis_charts', [])
     $scope.selector1 = {}
     $scope.selector2 = {}
     $scope.selector3 = {}
+    $scope.selector4 = {}
+    $scope.stream = false
+
+    $scope.streamColors = [
+      name: "blue"
+      scheme: ["#045A8D", "#2B8CBE", "#74A9CF", "#A6BDDB", "#D0D1E6", "#F1EEF6"]
+    ,
+      name: "pink"
+      scheme: ["#980043", "#DD1C77", "#DF65B0", "#C994C7", "#D4B9DA", "#F1EEF6"]
+    ,
+      name: "orange"
+      scheme: ["#B30000", "#E34A33", "#FC8D59", "#FDBB84", "#FDD49E", "#FEF0D9"]
+    ]
 
     $scope.graphInfo =
       graph: ""
@@ -89,23 +102,28 @@ charts = angular.module('app_analysis_charts', [])
 
     $scope.changeName = () ->
       $scope.graphInfo.graph = $scope.graphSelect.name
+
+      if $scope.graphSelect.name is "Stream Graph"
+        $scope.stream = true
+      else
+        $scope.stream = false
+
       if $scope.dataType is "NESTED"
         $scope.graphInfo.x = "initiate"
-        sendData.createGraph($scope.data, $scope.graphInfo, {key: 0, value: "initiate"}, $rootScope, $scope.dataType)
+        sendData.createGraph($scope.data, $scope.graphInfo, {key: 0, value: "initiate"}, $rootScope, $scope.dataType, $scope.selector4.scheme)
       else
-        sendData.createGraph(_chartData, $scope.graphInfo, _headers, $rootScope, $scope.dataType)
+        sendData.createGraph(_chartData, $scope.graphInfo, _headers, $rootScope, $scope.dataType, $scope.selector4.scheme)
 
     $scope.changeVar = (selector,headers, ind) ->
+      console.log $scope.selector4.scheme
       #if scope.graphInfo.graph is one of the time series ones, test variables for time format and only allow those when ind = x
       #only allow numerical ones for ind = y or z
       for h in headers
         if selector.value is h.value then $scope.graphInfo[ind] = parseFloat h.key
-      sendData.createGraph(_chartData,$scope.graphInfo,_headers,$rootScope, $scope.dataType)
+      sendData.createGraph(_chartData,$scope.graphInfo,_headers,$rootScope, $scope.dataType, $scope.selector4.scheme)
+
 
     sb = ctrlMngr.getSb()
-
-    headersX = []
-    #    if $scope.graphInfo.name in ['Area Chart', 'Stream Graph', 'Line Chart', 'Bivariate Area Chart'] and ind is 'x'
 
     token = sb.subscribe
       msg:'take table'
@@ -182,6 +200,7 @@ charts = angular.module('app_analysis_charts', [])
         z: false
         message: "Choose one variable to put into a pie chart."
         xLabel: ""
+
 
       ]
 
@@ -300,7 +319,7 @@ charts = angular.module('app_analysis_charts', [])
 
 .factory('app_analysis_charts_sendData', [
   () ->
-    _createGraph = (chartData, graphInfo, headers, $rootScope, dataType) ->
+    _createGraph = (chartData, graphInfo, headers, $rootScope, dataType, scheme_input) ->
       graphFormat = () ->
         console.log "dataType"
         console.log dataType
@@ -333,6 +352,8 @@ charts = angular.module('app_analysis_charts', [])
               obj.push tmp
           return obj
 
+      streamColor = scheme_input
+      console.log streamColor
 
       send = graphFormat()
       results =
@@ -341,6 +362,11 @@ charts = angular.module('app_analysis_charts', [])
         yLab: headers[graphInfo.y],
         zLab: headers[graphInfo.z],
         name: graphInfo.graph
+
+      if graphInfo.graph is "Stream Graph"
+        console.log("won't add property")
+        results.scheme = streamColor
+
 
       $rootScope.$broadcast 'charts:graphDiv', results
 
@@ -407,6 +433,18 @@ charts = angular.module('app_analysis_charts', [])
     checkTimeChoice: _checkTimeChoice
 ]
 
+.factory 'stackBar', [
+  () ->
+    _stackedBar = (data,ranges,width,height,_graph, gdata,container) ->
+      x = d3.scale.ordinal().rangeRoundBands([0, width-50])
+      y = d3.scale.linear().range([0, height-50])
+      z = d3.scale.ordinal().range(["darkblue", "blue", "lightblue"])
+
+      stacked = d3.layout.stack()(data)
+      console.log stacked
+
+    stackedBar: _stackedBar
+]
 
 .factory 'line', [
   () ->
@@ -516,7 +554,7 @@ charts = angular.module('app_analysis_charts', [])
 .factory 'streamGraph', [
   () ->
 
-    _streamGraph = (data,ranges,width,height,_graph) ->
+    _streamGraph = (data,ranges,width,height,_graph,scheme) ->
 #      parseDate = d3.time.format("%d-%b-%y").parse
       #console.log parseDate data[0].x
 
@@ -527,7 +565,10 @@ charts = angular.module('app_analysis_charts', [])
       .range([height-10, 0])
 
       z = d3.scale.ordinal()
-      .range(["#045A8D", "#2B8CBE", "#74A9CF", "#A6BDDB", "#D0D1E6", "#F1EEF6"])
+      .range(scheme) #["#045A8D", "#2B8CBE", "#74A9CF", "#A6BDDB", "#D0D1E6", "#F1EEF6"])
+
+      console.log scheme
+
 
       xAxis = d3.svg.axis()
       .scale(x)
@@ -1342,8 +1383,9 @@ charts = angular.module('app_analysis_charts', [])
   'treemap',
   'line',
   'bivariate',
+  'stackBar',
   'app_analysis_charts_checkTime'
-  (scatterPlot, histogram, pie, bubble, bar, streamGraph, area, treemap, line, bivariate, time) ->
+  (scatterPlot, histogram, pie, bubble, bar, streamGraph, area, treemap, line, bivariate, stackedBar, time) ->
     restrict: 'E'
     template: "<div class='graph-container' style='height: 600px'></div>"
     link: (scope, elem, attr) ->
@@ -1363,6 +1405,7 @@ charts = angular.module('app_analysis_charts', [])
         if newChartData
           gdata = newChartData
           data = newChartData.data
+          scheme = newChartData.scheme
           container = d3.select(elem.find('div')[0])
           container.selectAll('*').remove()
           svg = container.append('svg').attr("width", width + margin.left + margin.right).attr("height", height + margin.top + margin.bottom)
@@ -1388,9 +1431,11 @@ charts = angular.module('app_analysis_charts', [])
               pie.drawPie(data,width,height,_graph)
             when 'Scatter Plot'
               scatterPlot.drawScatterPlot(data,ranges,width,height,_graph,container,gdata)
+            when 'Stacked Bar Chart'
+              stackBar.stackedBar(data,ranges,width,height,_graph, gdata,container)
             when 'Stream Graph'
               time.checkTimeChoice(data)
-              streamGraph.streamGraph(data,ranges,width,height,_graph)
+              streamGraph.streamGraph(data,ranges,width,height,_graph, scheme)
             when 'Area Chart'
               time.checkTimeChoice(data)
               area.drawArea(height,width,_graph, data, gdata)

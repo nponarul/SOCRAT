@@ -22,3 +22,8 @@ div(ng-controller="sideChartsCtrl")
       label(for = "z") {{graphSelect.zLabel}}
       select#z.form-control(ng-change="changeVar(selector3,headers,'z');" ng-model="selector3" ng-options="v as v.value for v in headers")
 
+    div.form-horizontal(ng-show="stream")
+      label(for = "colors") Choose a color scheme
+      select#colors.form-control( ng-model = "selector4" ng-change= "changeVar(selector4, headers, 'c');" ng-options="s as s.name for s in streamColors")
+
+
