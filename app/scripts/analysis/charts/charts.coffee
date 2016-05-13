@@ -79,14 +79,20 @@ charts = angular.module('app_analysis_charts', [])
     $scope.stream = false
 
     $scope.streamColors = [
-      name: "blue"
+      name: "Blue"
       scheme: ["#045A8D", "#2B8CBE", "#74A9CF", "#A6BDDB", "#D0D1E6", "#F1EEF6"]
     ,
-      name: "pink"
+      name: "Pink"
       scheme: ["#980043", "#DD1C77", "#DF65B0", "#C994C7", "#D4B9DA", "#F1EEF6"]
     ,
-      name: "orange"
+      name: "Orange"
       scheme: ["#B30000", "#E34A33", "#FC8D59", "#FDBB84", "#FDD49E", "#FEF0D9"]
+    ,
+      name: "Purple"
+      scheme: ["#f2f0f7", "#dadaeb", "#bcbddc", "#9e9ac8", "#756bb1", "#54278f"]
+    ,
+      name: "Green"
+      scheme: ["#edf8e9","#c7e9c0","#a1d99b","#74c476","#31a354","#006d2c"]
     ]
 
     $scope.graphInfo =
@@ -197,6 +203,14 @@ charts = angular.module('app_analysis_charts', [])
         value: 4
         x: true
         y: false
+        z: false
+        message: "Choose one variable to put into a pie chart."
+        xLabel: ""
+      ,
+        name: 'Stacked Bar Chart'
+        value: 4
+        x: true
+        y: true
         z: false
         message: "Choose one variable to put into a pie chart."
         xLabel: ""
@@ -430,15 +444,73 @@ charts = angular.module('app_analysis_charts', [])
     checkTimeChoice: _checkTimeChoice
 ]
 
-.factory 'stackBar', [
+.factory 'stackedBar', [
   () ->
     _stackedBar = (data,ranges,width,height,_graph, gdata,container) ->
-      x = d3.scale.ordinal().rangeRoundBands([0, width-50])
-      y = d3.scale.linear().range([0, height-50])
-      z = d3.scale.ordinal().range(["darkblue", "blue", "lightblue"])
+        x = d3.scale.ordinal().rangeRoundBands([0, width-50])
+        y = d3.scale.linear().range([0, height-50])
+        color = d3.scale.ordinal().range(["#308fef", "#5fa9f3", "#1176db"])
 
-      stacked = d3.layout.stack()(data)
-      console.log stacked
+        xAxis = d3.svg.axis()
+        .scale(x)
+        .orient("bottom")
+
+        yAxis = d3.svg.axis()
+        .scale(y)
+        .orient("left")
+        .tickFormat(d3.format(".2s"))
+
+        for d in data
+          d.x = +d.x
+          d.y = +d.y
+          d.z = +d.z
+
+        color.domain(d3.keys(data[0]).filter(key) -> key is not "year")
+
+        for d in data
+          y0 = 0
+          d.types = color.domain().map (name) ->
+            name: name
+            y0: y0
+            y1: y0 += +d[name]
+
+          d.total = d.types[d.types.length - 1].y1
+
+        data.sort (a,b) -> a.year - b.year
+
+        x.domain(data.map (d) -> d.year)
+
+        y.domain([0, d3.max(data, (d) -> d.total)])
+
+        _graph.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis)
+
+        _graph.append("g")
+        .attr("class", "y axis")
+        .call(yAxis)
+        .append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 6)
+        .attr("dy", ".71em")
+        .style("text-anchor", "end")
+        .text("Ridership")
+
+        year = _graph.selectAll(".year")
+        .data(data)
+        .enter().append("g")
+        .attr("class", "g")
+        .attr("transform", (d) -> "translate(" + x(d.year) + ",0)")
+
+        year.selectAll("rect")
+        .data( (d) -> d.types)
+        .enter().append("rect")
+        .attr("width", x.rangeBand())
+        .attr("y", (d) -> y(d.y1))
+        .attr("height", (d) -> y(d.y0) - y(d.y1))
+        .style("fill", (d) -> color(d.name))
+
 
     stackedBar: _stackedBar
 ]
@@ -562,7 +634,7 @@ charts = angular.module('app_analysis_charts', [])
       .range([height-10, 0])
 
       z = d3.scale.ordinal()
-      .range(scheme) #["#045A8D", "#2B8CBE", "#74A9CF", "#A6BDDB", "#D0D1E6", "#F1EEF6"])
+      .range(scheme)
 
       console.log scheme
 
@@ -1387,7 +1459,7 @@ charts = angular.module('app_analysis_charts', [])
   'treemap',
   'line',
   'bivariate',
-  'stackBar',
+  'stackedBar',
   'app_analysis_charts_checkTime'
   (scatterPlot, histogram, pie, bubble, bar, streamGraph, area, treemap, line, bivariate, stackedBar, time) ->
     restrict: 'E'
