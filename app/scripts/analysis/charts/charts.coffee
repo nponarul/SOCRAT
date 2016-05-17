@@ -79,20 +79,14 @@ charts = angular.module('app_analysis_charts', [])
     $scope.stream = false
 
     $scope.streamColors = [
-      name: "Blue"
+      name: "blue"
       scheme: ["#045A8D", "#2B8CBE", "#74A9CF", "#A6BDDB", "#D0D1E6", "#F1EEF6"]
     ,
-      name: "Pink"
+      name: "pink"
       scheme: ["#980043", "#DD1C77", "#DF65B0", "#C994C7", "#D4B9DA", "#F1EEF6"]
     ,
-      name: "Orange"
+      name: "orange"
       scheme: ["#B30000", "#E34A33", "#FC8D59", "#FDBB84", "#FDD49E", "#FEF0D9"]
-    ,
-      name: "Purple"
-      scheme: ["#f2f0f7", "#dadaeb", "#bcbddc", "#9e9ac8", "#756bb1", "#54278f"]
-    ,
-      name: "Green"
-      scheme: ["#edf8e9","#c7e9c0","#a1d99b","#74c476","#31a354","#006d2c"]
     ]
 
     $scope.graphInfo =
@@ -207,14 +201,13 @@ charts = angular.module('app_analysis_charts', [])
         message: "Choose one variable to put into a pie chart."
         xLabel: ""
       ,
-        name: 'Stacked Bar Chart'
-        value: 4
+        name: 'Gaussian Distribution'
+        value: 5
         x: true
-        y: true
+        y: false
         z: false
-        message: "Choose one variable to put into a pie chart."
+        message: "Choose one variable."
         xLabel: ""
-
 
       ]
 
@@ -335,6 +328,9 @@ charts = angular.module('app_analysis_charts', [])
   () ->
     _createGraph = (chartData, graphInfo, headers, $rootScope, dataType, scheme_input) ->
       graphFormat = () ->
+        console.log "dataType"
+        console.log dataType
+
         if dataType is "NESTED" then return chartData
         else # dataType = "FLAT"
           obj = []
@@ -444,73 +440,15 @@ charts = angular.module('app_analysis_charts', [])
     checkTimeChoice: _checkTimeChoice
 ]
 
-.factory 'stackedBar', [
+.factory 'stackBar', [
   () ->
     _stackedBar = (data,ranges,width,height,_graph, gdata,container) ->
-        x = d3.scale.ordinal().rangeRoundBands([0, width-50])
-        y = d3.scale.linear().range([0, height-50])
-        color = d3.scale.ordinal().range(["#308fef", "#5fa9f3", "#1176db"])
+      x = d3.scale.ordinal().rangeRoundBands([0, width-50])
+      y = d3.scale.linear().range([0, height-50])
+      z = d3.scale.ordinal().range(["darkblue", "blue", "lightblue"])
 
-        xAxis = d3.svg.axis()
-        .scale(x)
-        .orient("bottom")
-
-        yAxis = d3.svg.axis()
-        .scale(y)
-        .orient("left")
-        .tickFormat(d3.format(".2s"))
-
-        for d in data
-          d.x = +d.x
-          d.y = +d.y
-          d.z = +d.z
-
-        color.domain(d3.keys(data[0]).filter(key) -> key is not "year")
-
-        for d in data
-          y0 = 0
-          d.types = color.domain().map (name) ->
-            name: name
-            y0: y0
-            y1: y0 += +d[name]
-
-          d.total = d.types[d.types.length - 1].y1
-
-        data.sort (a,b) -> a.year - b.year
-
-        x.domain(data.map (d) -> d.year)
-
-        y.domain([0, d3.max(data, (d) -> d.total)])
-
-        _graph.append("g")
-        .attr("class", "x axis")
-        .attr("transform", "translate(0," + height + ")")
-        .call(xAxis)
-
-        _graph.append("g")
-        .attr("class", "y axis")
-        .call(yAxis)
-        .append("text")
-        .attr("transform", "rotate(-90)")
-        .attr("y", 6)
-        .attr("dy", ".71em")
-        .style("text-anchor", "end")
-        .text("Ridership")
-
-        year = _graph.selectAll(".year")
-        .data(data)
-        .enter().append("g")
-        .attr("class", "g")
-        .attr("transform", (d) -> "translate(" + x(d.year) + ",0)")
-
-        year.selectAll("rect")
-        .data( (d) -> d.types)
-        .enter().append("rect")
-        .attr("width", x.rangeBand())
-        .attr("y", (d) -> y(d.y1))
-        .attr("height", (d) -> y(d.y0) - y(d.y1))
-        .style("fill", (d) -> color(d.name))
-
+      stacked = d3.layout.stack()(data)
+      console.log stacked
 
     stackedBar: _stackedBar
 ]
@@ -634,7 +572,7 @@ charts = angular.module('app_analysis_charts', [])
       .range([height-10, 0])
 
       z = d3.scale.ordinal()
-      .range(scheme)
+      .range(scheme) #["#045A8D", "#2B8CBE", "#74A9CF", "#A6BDDB", "#D0D1E6", "#F1EEF6"])
 
       console.log scheme
 
@@ -1298,16 +1236,6 @@ charts = angular.module('app_analysis_charts', [])
       maxDepth = 5
       sliderValue = 3
 
-      svg.selectAll('g').remove()
-
-      title = svg.append('text')
-      .attr('transform', 'translate(0, 20)')
-      .attr('width', '100%')
-      .text(() -> if (data.name != null) then data.name else '')
-      .attr('color', 'balck')
-      .attr('font-size', 15)
-
-
       sliderBar = container.append('input')
       .attr('id', 'slider')
       .attr('type', 'range')
@@ -1337,7 +1265,6 @@ charts = angular.module('app_analysis_charts', [])
         sliderBar.attr('max', maxDepth)
 
         node = svg.append('g')
-        .attr('transform', 'translate(0, 35)')
         .selectAll('g.node')
         .data(filteredData)
         .enter().append('g')
@@ -1358,7 +1285,11 @@ charts = angular.module('app_analysis_charts', [])
         .style('stroke-width', '1px')
         .on('mouseover', () ->
           d3.select(@).append('title')
-          .text((d) -> d.name )
+          .text((d) ->
+            'Parent: ' + d.parent.name + '\n' +
+              'Name: ' + d.name + '\n' +
+              'Depth: ' + d.depth
+          )
           d3.select(@)
           .style('stroke', 'black')
           .style('stroke-width', '3px')
@@ -1448,6 +1379,171 @@ charts = angular.module('app_analysis_charts', [])
     bivariateChart: _bivariateChart
 ]
 
+.factory 'gauss', [
+  () ->
+    distanceFromMean = 5
+
+    extract = (data, variable) ->
+      tmp = []
+      for d in data
+        tmp.push +d[variable]
+      tmp
+
+    getRightBound = (middle,step) ->
+      middle + step *distanceFromMean
+
+    getLeftBound = (middle,step) ->
+      middle - (step*distanceFromMean)
+
+    sort = (values) ->
+      values.sort (a,b) -> a-b
+
+    getVariance = (values,mean) ->
+      temp = 0
+      numberOfValues = values.length
+      while( numberOfValues--)
+        temp += Math.pow( (values[numberOfValues ] - mean), 2 )
+
+      return temp / values.length
+
+    getSum = (values) ->
+      values.reduce (previousValue, currentValue) -> previousValue + currentValue
+
+    getGaussianFunctionPoints = (std,mean,variance,leftBound,rightBound) ->
+      data = []
+      for i in [leftBound...rightBound] by 1
+        data.push({x:i,y:(1/(std*Math.sqrt(Math.PI*2)))*Math.exp(-(Math.pow(i-mean,2)/ (2*variance)))})
+      console.log(data)
+      data;
+
+    getMean = (valueSum,numberOfOccurrences) ->
+      valueSum / numberOfOccurrences
+
+    getZ = (x,mean,standardDerivation) ->
+      (x-mean)/standardDerivation
+
+    getWeightedValues = (values) ->
+      weightedValues= {}
+      data= []
+      lengthValues = values.length
+      for i in [0...lengthValues] by 1
+        label = values[i].toString()
+        if(weightedValues[label])
+          weightedValues[label].weight++
+        else
+          weightedValues[label]={weight :1,value :label}
+          data.push(weightedValues[label])
+      return data
+
+    getRandomNumber = (min,max) ->
+      Math.round((max-min) * Math.random() + min)
+
+    getRandomValueArray = (data) ->
+      values = []
+      length = data.length
+      for i in [1...length]
+        values.push data[Math.floor(Math.random() * data.length)]
+      return values
+
+    drawGaussianCurve = (data, width, height, _graph) ->
+
+      toolTipElement = _graph.append('div')
+      .attr('class', 'tooltipGauss')
+      .attr('position', 'absolute')
+
+      showToolTip = (value, positionX, positionY) ->
+        toolTipElement.attr('top', positionY +10+"px")
+        toolTipElement.attr('left', positionX +10+"px")
+        toolTipElement.innerHTML = " Z = " + value
+
+      hideToolTip = () ->
+        toolTipElement.innerHTML = " "
+
+      console.log extract(data, "x")
+      sample = sort(getRandomValueArray(extract(data,"x")))
+      sum = getSum(sample)
+      min = sample[0]
+      max = sample[sample.length - 1]
+      mean = getMean(sum, sample.length)
+      variance = getVariance(sample, mean)
+      standardDerivation =  Math.sqrt(variance)
+      rightBound = getRightBound(mean, standardDerivation)
+      leftBound = getLeftBound(mean,standardDerivation)
+      bottomBound = 0
+      topBound = 1/(standardDerivation*Math.sqrt(Math.PI*2))
+      gaussianCurveData = getGaussianFunctionPoints(standardDerivation,mean,variance,leftBound,rightBound)
+      radiusCoef = 5
+
+      xScale = d3.scale.linear().range([0, width]).domain([leftBound, rightBound])
+      yScale = d3.scale.linear().range([height, 0]).domain([bottomBound, topBound])
+
+      xAxis = d3.svg.axis().ticks(20)
+      .scale(xScale)
+
+      yAxis = d3.svg.axis()
+      .scale(yScale)
+      .ticks(10)
+      .tickPadding(0)
+      .orient("right")
+
+      lineGen = d3.svg.line()
+                .x (d) -> xScale(d.x)
+                .y (d) -> yScale(d.y)
+                .interpolate("basis")
+
+      _graph.append('svg:path')
+      .attr('d', lineGen(gaussianCurveData))
+      .data([gaussianCurveData])
+      .attr('stroke', '#000000')
+      .attr('stroke-width', 2)
+      .on('mousemove', (d) -> showToolTip(getZ(xScale.invert(d3.event.x),mean,standardDerivation).toLocaleString(),d3.event.x,d3.event.y))
+      .on('mouseout', (d) -> hideToolTip())
+
+      .attr('fill', "aquamarine")
+      .style("opacity", .2)
+
+      _graph.append("svg:g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + (height) + ")")
+      .call(xAxis)
+
+      _graph.append("svg:g")
+      .attr("class", "y axis")
+      .attr("transform", "translate(" + (xScale(mean)) + ",0)")
+      .call(yAxis)
+
+      _graph.append("svg:g")
+      .append("text")      #text label for the x axis
+      .attr("x", width/2 + width/4  )
+      .attr("y", 20  )
+      .style("text-anchor", "middle")
+      .style("fill", "white")
+#      .text(seriesName)
+
+# Weighted Values
+#      _graph.selectAll("circle")
+#      .data(getWeightedValues(sample)).enter().append("circle")
+#      #text label for the x axis
+#      .attr("cx", (d) -> xScale(d.value))
+#      .attr("cy", height)
+#      .attr("r", (d) -> radiusCoef)
+#      .style("fill","red")
+#      .style("opacity",.5)
+
+    getRandomValueArray: getRandomValueArray
+    getGaussianFunctionPoints: getGaussianFunctionPoints
+    getWeightedValues: getWeightedValues
+    getSum: getSum
+    getMean: getMean
+    sort: sort
+    getVariance: getVariance
+    getLeftBound: getLeftBound
+    getZ: getZ
+    getRightBound: getRightBound
+    drawGaussianCurve: drawGaussianCurve
+
+]
+
 .directive 'd3Charts', [
   'scatterPlot',
   'histogram',
@@ -1459,9 +1555,10 @@ charts = angular.module('app_analysis_charts', [])
   'treemap',
   'line',
   'bivariate',
-  'stackedBar',
+  'stackBar',
+  'gauss',
   'app_analysis_charts_checkTime'
-  (scatterPlot, histogram, pie, bubble, bar, streamGraph, area, treemap, line, bivariate, stackedBar, time) ->
+  (scatterPlot, histogram, pie, bubble, bar, streamGraph, area, treemap, line, bivariate, stackedBar, gauss, time) ->
     restrict: 'E'
     template: "<div class='graph-container' style='height: 600px'></div>"
     link: (scope, elem, attr) ->
@@ -1523,5 +1620,7 @@ charts = angular.module('app_analysis_charts', [])
             when 'Bivariate Area Chart'
               time.checkTimeChoice(data)
               bivariate.bivariateChart(height,width,_graph, data, gdata)
+            when 'Gaussian Distribution'
+              gauss.drawGaussianCurve(data, width, height, _graph)
 
 ]
