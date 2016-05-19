@@ -115,7 +115,7 @@ charts = angular.module('app_analysis_charts', [])
         sendData.createGraph(_chartData, $scope.graphInfo, _headers, $rootScope, $scope.dataType, $scope.selector4.scheme)
 
     $scope.changeVar = (selector,headers, ind) ->
-      console.log $scope.selector4.scheme
+      #console.log $scope.selector4.scheme
       #if scope.graphInfo.graph is one of the time series ones, test variables for time format and only allow those when ind = x
       #only allow numerical ones for ind = y or z
       for h in headers
@@ -229,6 +229,13 @@ charts = angular.module('app_analysis_charts', [])
         y: false
         z: false
         message: ""
+      ,
+        name: 'Tilford Tree'
+        value: 10
+        x: false
+        y: false
+        z: false
+        message: ''
       ]
 
     _getTime = () ->
@@ -328,8 +335,8 @@ charts = angular.module('app_analysis_charts', [])
   () ->
     _createGraph = (chartData, graphInfo, headers, $rootScope, dataType, scheme_input) ->
       graphFormat = () ->
-        console.log "dataType"
-        console.log dataType
+        #console.log "dataType"
+        #console.log dataType
 
         if dataType is "NESTED" then return chartData
         else # dataType = "FLAT"
@@ -360,7 +367,7 @@ charts = angular.module('app_analysis_charts', [])
           return obj
 
       streamColor = scheme_input
-      console.log streamColor
+      #console.log streamColor
 
       send = graphFormat()
       results =
@@ -448,7 +455,7 @@ charts = angular.module('app_analysis_charts', [])
       z = d3.scale.ordinal().range(["darkblue", "blue", "lightblue"])
 
       stacked = d3.layout.stack()(data)
-      console.log stacked
+      #console.log stacked
 
     stackedBar: _stackedBar
 ]
@@ -531,7 +538,7 @@ charts = angular.module('app_analysis_charts', [])
         d0 = data[i - 1]
         d1 = data[i]
         d = x0 - d0.x > d1.x - x0 ? d1 : d0
-        console.log d
+        #console.log d
         focus.select("circle.y")
         .attr("transform","translate(" + x(d0.x) + "," + y(d0.y) + ")")
         val = y.invert(d3.mouse(this)[0])
@@ -545,7 +552,7 @@ charts = angular.module('app_analysis_charts', [])
       .style("pointer-events", "all")
       .on("mouseover", () ->
         focus.style("display", null)
-        console.log val
+        #console.log val
         tooltip.transition().duration(200).style('opacity', .9)
 
       )
@@ -574,7 +581,7 @@ charts = angular.module('app_analysis_charts', [])
       z = d3.scale.ordinal()
       .range(scheme) #["#045A8D", "#2B8CBE", "#74A9CF", "#A6BDDB", "#D0D1E6", "#F1EEF6"])
 
-      console.log scheme
+      #console.log scheme
 
 
       xAxis = d3.svg.axis()
@@ -593,7 +600,7 @@ charts = angular.module('app_analysis_charts', [])
 
       nest = d3.nest().key (d) -> d.z
 
-      console.log data
+      #console.log data
 
       area = d3.svg.area()
       .interpolate("cardinal")
@@ -605,14 +612,14 @@ charts = angular.module('app_analysis_charts', [])
         d.x = new Date d.x
         d.y = +d.y
 
-      console.log nest.entries(data)
+      #console.log nest.entries(data)
 
       layers = stack(nest.entries(data))
 
       x.domain(d3.extent(data, (d)-> d.x))
       y.domain([0, d3.max(data, (d) -> d.y0 + d.y)])
 
-      console.log layers
+      #console.log layers
 
       _graph.selectAll(".layer")
       .data(layers)
@@ -1236,6 +1243,15 @@ charts = angular.module('app_analysis_charts', [])
       maxDepth = 5
       sliderValue = 3
 
+      svg.selectAll('g').remove()
+
+      title = svg.append('text')
+        .attr('transform', 'translate(0, 20)')
+        .attr('width', '100%')
+        .text(() -> if (data.name != null) then data.name else '')
+        .attr('color', 'balck')
+        .attr('font-size', 15)
+
       sliderBar = container.append('input')
       .attr('id', 'slider')
       .attr('type', 'range')
@@ -1265,6 +1281,7 @@ charts = angular.module('app_analysis_charts', [])
         sliderBar.attr('max', maxDepth)
 
         node = svg.append('g')
+        .attr('transform', 'translate(0, 35)')
         .selectAll('g.node')
         .data(filteredData)
         .enter().append('g')
@@ -1285,11 +1302,7 @@ charts = angular.module('app_analysis_charts', [])
         .style('stroke-width', '1px')
         .on('mouseover', () ->
           d3.select(@).append('title')
-          .text((d) ->
-            'Parent: ' + d.parent.name + '\n' +
-              'Name: ' + d.name + '\n' +
-              'Depth: ' + d.depth
-          )
+          .text((d) -> d.name )
           d3.select(@)
           .style('stroke', 'black')
           .style('stroke-width', '3px')
@@ -1353,7 +1366,7 @@ charts = angular.module('app_analysis_charts', [])
       x.domain(d3.extent data, (d) -> d.x)
       y.domain([d3.min(data, (d) -> d.y), d3.max(data, (d) -> d.z)])
 
-      console.log y.domain
+      #console.log y.domain
 
       _graph.append("path")
       .datum(data)
@@ -1413,7 +1426,7 @@ charts = angular.module('app_analysis_charts', [])
       data = []
       for i in [leftBound...rightBound] by 1
         data.push({x:i,y:(1/(std*Math.sqrt(Math.PI*2)))*Math.exp(-(Math.pow(i-mean,2)/ (2*variance)))})
-      console.log(data)
+      #console.log(data)
       data;
 
     getMean = (valueSum,numberOfOccurrences) ->
@@ -1459,7 +1472,7 @@ charts = angular.module('app_analysis_charts', [])
       hideToolTip = () ->
         toolTipElement.innerHTML = " "
 
-      console.log extract(data, "x")
+      #console.log extract(data, "x")
       sample = sort(getRandomValueArray(extract(data,"x")))
       sum = getSum(sample)
       min = sample[0]
@@ -1544,6 +1557,56 @@ charts = angular.module('app_analysis_charts', [])
 
 ]
 
+.factory 'tilfordTree', [
+  () ->
+    _drawTilfordTree = (data, container) ->
+      diameter = 600
+
+      container.selectAll('svg').remove()
+
+      tree = d3.layout.tree()
+        .size([360, diameter / 2 - 10])
+        .separation( (a, b) -> (if a.parent == b.parent then 1 else 2) / a.depth)
+
+      diagonal = d3.svg.diagonal.radial()
+        .projection((d) -> [d.y, d.x / 180 * Math.PI])
+
+      _svg = container.append('svg')
+      .attr('width', diameter)
+      .attr('height', diameter)
+      .append('g')
+        .attr('transform', 'translate(' + diameter / 2 + ',' + diameter / 2 + ')')
+
+      nodes = tree.nodes(data)
+      links = tree.links(nodes)
+
+      link = _svg.selectAll('.link')
+        .data(links)
+      .enter().append('path')
+        .attr('class', 'link')
+        .attr('d', diagonal)
+
+      node = _svg.selectAll('.node')
+        .data(nodes)
+      .enter().append('g')
+        .attr('class', 'node')
+        .attr('transform', (d) -> 'rotate(' + (d.x - 90) + ')translate(' + d.y + ')')
+
+      node.append('circle')
+      .attr('r', 4.5)
+
+      node.append('text')
+      .attr('dy', '.31em')
+      .attr('text-anchor', (d) -> if d.x < 180 then 'start' else 'end')
+      .attr('transform', (d) -> if d.x < 180 then 'translate(8)' else 'rotate(180)translate(-8)')
+      .text((d) -> d.name)
+
+      d3.select(self.frameElement)
+      .style('height', diameter - 100 + 'px')
+
+    drawTilfordTree: _drawTilfordTree
+]
+
 .directive 'd3Charts', [
   'scatterPlot',
   'histogram',
@@ -1557,8 +1620,9 @@ charts = angular.module('app_analysis_charts', [])
   'bivariate',
   'stackBar',
   'gauss',
+  'tilfordTree',
   'app_analysis_charts_checkTime'
-  (scatterPlot, histogram, pie, bubble, bar, streamGraph, area, treemap, line, bivariate, stackedBar, gauss, time) ->
+  (scatterPlot, histogram, pie, bubble, bar, streamGraph, area, treemap, line, bivariate, stackedBar, gauss, tilfordTree, time) ->
     restrict: 'E'
     template: "<div class='graph-container' style='height: 600px'></div>"
     link: (scope, elem, attr) ->
@@ -1622,5 +1686,7 @@ charts = angular.module('app_analysis_charts', [])
               bivariate.bivariateChart(height,width,_graph, data, gdata)
             when 'Gaussian Distribution'
               gauss.drawGaussianCurve(data, width, height, _graph)
+            when 'Tilford Tree'
+              tilfordTree.drawTilfordTree(data, container)
 
 ]
