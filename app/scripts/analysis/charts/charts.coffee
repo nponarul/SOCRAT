@@ -142,7 +142,7 @@ charts = angular.module('app_analysis_charts', [])
             $scope.graphs = list.nested()
             $scope.data = _data.data
             $scope.dataType = "NESTED"
-            #$scope.header = {key: 0, value: "initiate"}
+    #$scope.header = {key: 0, value: "initiate"}
 
     sb.publish
       msg:'get table'
@@ -328,9 +328,6 @@ charts = angular.module('app_analysis_charts', [])
   () ->
     _createGraph = (chartData, graphInfo, headers, $rootScope, dataType, scheme_input) ->
       graphFormat = () ->
-        console.log "dataType"
-        console.log dataType
-
         if dataType is "NESTED" then return chartData
         else # dataType = "FLAT"
           obj = []
@@ -563,7 +560,7 @@ charts = angular.module('app_analysis_charts', [])
 
     _streamGraph = (data,ranges,width,height,_graph,scheme) ->
 #      parseDate = d3.time.format("%d-%b-%y").parse
-      #console.log parseDate data[0].x
+#console.log parseDate data[0].x
 
       x = d3.time.scale()
       .range([0, width])
@@ -580,7 +577,7 @@ charts = angular.module('app_analysis_charts', [])
       xAxis = d3.svg.axis()
       .scale(x)
       .orient("bottom")
-#      .ticks(d3.time.weeks)
+      #      .ticks(d3.time.weeks)
 
       yAxis = d3.svg.axis()
       .scale(y)
@@ -1487,9 +1484,9 @@ charts = angular.module('app_analysis_charts', [])
       .orient("right")
 
       lineGen = d3.svg.line()
-                .x (d) -> xScale(d.x)
-                .y (d) -> yScale(d.y)
-                .interpolate("basis")
+      .x (d) -> xScale(d.x)
+      .y (d) -> yScale(d.y)
+      .interpolate("basis")
 
       _graph.append('svg:path')
       .attr('d', lineGen(gaussianCurveData))
@@ -1518,17 +1515,17 @@ charts = angular.module('app_analysis_charts', [])
       .attr("y", 20  )
       .style("text-anchor", "middle")
       .style("fill", "white")
-#      .text(seriesName)
+    #      .text(seriesName)
 
-# Weighted Values
-#      _graph.selectAll("circle")
-#      .data(getWeightedValues(sample)).enter().append("circle")
-#      #text label for the x axis
-#      .attr("cx", (d) -> xScale(d.value))
-#      .attr("cy", height)
-#      .attr("r", (d) -> radiusCoef)
-#      .style("fill","red")
-#      .style("opacity",.5)
+    # Weighted Values
+    #      _graph.selectAll("circle")
+    #      .data(getWeightedValues(sample)).enter().append("circle")
+    #      #text label for the x axis
+    #      .attr("cx", (d) -> xScale(d.value))
+    #      .attr("cy", height)
+    #      .attr("r", (d) -> radiusCoef)
+    #      .style("fill","red")
+    #      .style("opacity",.5)
 
     getRandomValueArray: getRandomValueArray
     getGaussianFunctionPoints: getGaussianFunctionPoints
