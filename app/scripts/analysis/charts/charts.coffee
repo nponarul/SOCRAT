@@ -1559,7 +1559,8 @@ charts = angular.module('app_analysis_charts', [])
 
 .factory 'tilfordTree', [
   () ->
-    _drawTilfordTree = (data, container) ->
+    _drawTilfordTree = (InputData, container) ->
+      data = JSON.parse(JSON.stringify(InputData)) # make the InputData immutable
       diameter = 600
       width = diameter
       height = diameter
