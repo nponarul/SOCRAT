@@ -17,8 +17,13 @@ module.exports = (config) ->
     # list of files / patterns to load in the browser
     files: [
       # bower:js
+<<<<<<< HEAD
       'bower_components/angular/angular.js'
       'bower_components/jquery/dist/jquery.js'
+=======
+      'bower_components/jquery/dist/jquery.js'
+      'bower_components/angular/angular.js'
+>>>>>>> e29ce026b7630a1c91c8cb29732aec424ea4f625
       'bower_components/jquery-highlight/jquery.highlight.js'
       'bower_components/jquery-hoverintent/jquery.hoverIntent.js'
       'bower_components/datatables/media/js/jquery.dataTables.js'
