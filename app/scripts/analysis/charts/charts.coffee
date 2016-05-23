@@ -210,11 +210,19 @@ charts = angular.module('app_analysis_charts', [])
         xLabel: ""
       ,
         name: 'Ring Chart'
-        value: 4
+        value: 6
         x: true
         y: false
         z: false
         message: "Choose one variable to put into a pie chart."
+        xLabel: ""
+      ,
+        name: 'Stacked Bar Chart'
+        value: 7
+        x: true
+        y: true
+        z: true
+        message: "Choose three numerical variables."
         xLabel: ""
 
       ]
@@ -464,13 +472,22 @@ charts = angular.module('app_analysis_charts', [])
     checkTimeChoice: _checkTimeChoice
 ]
 
-.factory 'stackBar', [
+.factory 'stackedBar', [
   () ->
     _stackedBar = (data,ranges,width,height,_graph, gdata,container) ->
       x = d3.scale.ordinal().rangeRoundBands([0, width-50])
       y = d3.scale.linear().range([0, height-50])
       z = d3.scale.ordinal().range(["darkblue", "blue", "lightblue"])
 
+      newData = []
+      for d in data
+        obj = {}
+        obj[gdata.xLab.value] = +d.x
+        obj[gdata.yLab.value] = +d.y
+        obj[gdata.zLab.value] = +d.z
+        newData.push obj
+
+      console.log newData
       stacked = d3.layout.stack()(data)
       console.log stacked
 
@@ -1587,7 +1604,7 @@ charts = angular.module('app_analysis_charts', [])
   'treemap',
   'line',
   'bivariate',
-  'stackBar',
+  'stackedBar',
   'gauss',
   'app_analysis_charts_checkTime'
   (scatterPlot, histogram, pie, bubble, bar, streamGraph, area, treemap, line, bivariate, stackedBar, gauss, time) ->
@@ -1637,7 +1654,7 @@ charts = angular.module('app_analysis_charts', [])
             when 'Scatter Plot'
               scatterPlot.drawScatterPlot(data,ranges,width,height,_graph,container,gdata)
             when 'Stacked Bar Chart'
-              stackBar.stackedBar(data,ranges,width,height,_graph, gdata,container)
+              stackedBar.stackedBar(data,ranges,width,height,_graph, gdata,container)
             when 'Stream Graph'
               time.checkTimeChoice(data)
               streamGraph.streamGraph(data,ranges,width,height,_graph, scheme)
