@@ -1,0 +1,23 @@
+/node_modules
+/.sass-cache
+/bower_components
+/.idea
+/test/test-results.xml
+*.log
+
+# Public files (generated)#
+===============
+/dist
+/.tmp
+
+#OS generated files #
+=====================
+.DS_STORE
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+
