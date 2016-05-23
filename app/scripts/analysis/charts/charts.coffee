@@ -208,6 +208,14 @@ charts = angular.module('app_analysis_charts', [])
         z: false
         message: "Choose one variable."
         xLabel: ""
+      ,
+        name: 'Ring Chart'
+        value: 4
+        x: true
+        y: false
+        z: false
+        message: "Choose one variable to put into a pie chart."
+        xLabel: ""
 
       ]
 
@@ -308,6 +316,22 @@ charts = angular.module('app_analysis_charts', [])
         zLabel: "Add radius"
       ,
         name: 'Pie Chart'
+        value: 4
+        x: true
+        y: false
+        z: false
+        message: "Choose one variable to put into a pie chart."
+        xLabel: ""
+      ,
+        name: 'Gaussian Distribution'
+        value: 5
+        x: true
+        y: false
+        z: false
+        message: "Choose one variable."
+        xLabel: ""
+      ,
+        name: 'Ring Chart'
         value: 4
         x: true
         y: false
@@ -820,16 +844,21 @@ charts = angular.module('app_analysis_charts', [])
       obj = d3.entries counts
       return obj
 
-    _drawPie = (data,width,height,_graph) ->
+    _drawPie = (data,width,height,_graph, pie) ->
       radius = Math.min(width, height) / 2
       arc = d3.svg.arc()
       .outerRadius(radius)
       .innerRadius(0)
 
+      if not pie
+        arc.innerRadius(radius-60)
+
       #color = d3.scale.ordinal().range(["#ffffcc","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#0c2c84"])
       color = d3.scale.category20c()
       arcOver = d3.svg.arc()
       .outerRadius(radius + 10)
+      if not pie
+        arcOver.innerRadius(radius-50)
 
       pie = d3.layout.pie()
       .value((d)-> d.value)
@@ -1450,13 +1479,17 @@ charts = angular.module('app_analysis_charts', [])
       toolTipElement = _graph.append('div')
       .attr('class', 'tooltipGauss')
       .attr('position', 'absolute')
+      .attr('width', 15)
+      .attr('height', 10)
 
       showToolTip = (value, positionX, positionY) ->
-        toolTipElement.attr('top', positionY +10+"px")
-        toolTipElement.attr('left', positionX +10+"px")
-        toolTipElement.innerHTML = " Z = " + value
+        toolTipElement.style('display', 'block')
+        toolTipElement.style('top', positionY+10+"px")
+        toolTipElement.style('left', positionX+10+"px")
+        toolTipElement.innerHTML = " Z = "+value
 
       hideToolTip = () ->
+        toolTipElement.style('display', 'none')
         toolTipElement.innerHTML = " "
 
       console.log extract(data, "x")
@@ -1494,13 +1527,12 @@ charts = angular.module('app_analysis_charts', [])
       _graph.append('svg:path')
       .attr('d', lineGen(gaussianCurveData))
       .data([gaussianCurveData])
-      .attr('stroke', '#000000')
+      .attr('stroke', 'black')
       .attr('stroke-width', 2)
       .on('mousemove', (d) -> showToolTip(getZ(xScale.invert(d3.event.x),mean,standardDerivation).toLocaleString(),d3.event.x,d3.event.y))
       .on('mouseout', (d) -> hideToolTip())
-
       .attr('fill', "aquamarine")
-      .style("opacity", .2)
+#      .style("opacity", .2)
 
       _graph.append("svg:g")
       .attr("class", "x axis")
@@ -1599,9 +1631,9 @@ charts = angular.module('app_analysis_charts', [])
               bubble.drawBubble(ranges,width,height,_graph,data,gdata,container)
             when 'Histogram'
               histogram.drawHist(_graph,data,container,gdata,width,height,ranges)
-            when 'Pie Chart'
+            when 'Ring Chart'
               _graph = svg.append('g').attr("transform", "translate(300,250)").attr("id", "remove")
-              pie.drawPie(data,width,height,_graph)
+              pie.drawPie(data,width,height,_graph,false)
             when 'Scatter Plot'
               scatterPlot.drawScatterPlot(data,ranges,width,height,_graph,container,gdata)
             when 'Stacked Bar Chart'
@@ -1622,5 +1654,8 @@ charts = angular.module('app_analysis_charts', [])
               bivariate.bivariateChart(height,width,_graph, data, gdata)
             when 'Gaussian Distribution'
               gauss.drawGaussianCurve(data, width, height, _graph)
+            when 'Pie Chart'
+              _graph = svg.append('g').attr("transform", "translate(300,250)").attr("id", "remove")
+              pie.drawPie(data,width,height,_graph,true)
 
 ]
