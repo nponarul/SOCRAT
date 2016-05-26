@@ -481,9 +481,9 @@ charts = angular.module('app_analysis_charts', [])
 
       y = d3.scale.linear()
         .rangeRound([height, 0])
-
-      z = d3.scale.ordinal()
-        .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"])
+#
+#      z = d3.scale.ordinal()
+#        .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"])
 
       xAxis = d3.svg.axis()
         .scale(x)
@@ -494,13 +494,15 @@ charts = angular.module('app_analysis_charts', [])
         .orient("left")
         .tickFormat(d3.format(".2s"))
 
+      tooltip = container
+      .append('div')
+      .attr('class', 'tooltip')
 
-
-      x = d3.scale.ordinal().rangeRoundBands([0, width-50])
-      y = d3.scale.linear().range([0, height-50])
+#      x = d3.scale.ordinal().rangeRoundBands([0, width-50])
+#      y = d3.scale.linear().range([0, height-50])
       z = d3.scale.ordinal()
           .domain([gdata.xLab.value,gdata.yLab.value,gdata.zLab.value])
-          .range(["darkblue", "blue", "lightblue"])
+          .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"])
 
       newData = []
       for d in data
@@ -545,6 +547,12 @@ charts = angular.module('app_analysis_charts', [])
         .attr("y", (d) -> y(d.y1))
         .attr("height", (d) -> y(d.y0) - y(d.y1))
         .style("fill", (d) -> z(d.name))
+        .on('mouseover', (d)->
+          tooltip.transition().duration(200).style('opacity', .9)
+          tooltip.html('<div style="background-color:white; padding:5px; border-radius: 5px">'+d.name+ ' ' +d.y1+'</div>')
+          .style('left', d3.select(this).attr('x') + 'px').style('top', 50))
+        .on('mouseout', (d)->
+          tooltip.transition().duration(500).style('opacity', 0))
 
       console.log newData
 
