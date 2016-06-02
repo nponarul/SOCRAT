@@ -1238,8 +1238,8 @@ charts = angular.module('app_analysis_charts', [])
 
 .factory 'treemap',[
   () ->
-    _drawTreemap = (svg, width, height, container, data) ->
-
+    _drawTreemap = (svg, width, height, container, InputData) ->
+      data = JSON.parse(JSON.stringify(InputData)) # make the InputData immutable
       maxDepth = 5
       sliderValue = 3
 
