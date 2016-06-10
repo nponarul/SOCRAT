@@ -115,7 +115,7 @@ charts = angular.module('app_analysis_charts', [])
         sendData.createGraph(_chartData, $scope.graphInfo, _headers, $rootScope, $scope.dataType, $scope.selector4.scheme)
 
     $scope.changeVar = (selector,headers, ind) ->
-      console.log $scope.selector4.scheme
+      #console.log $scope.selector4.scheme
       #if scope.graphInfo.graph is one of the time series ones, test variables for time format and only allow those when ind = x
       #only allow numerical ones for ind = y or z
       for h in headers
@@ -229,6 +229,13 @@ charts = angular.module('app_analysis_charts', [])
         y: false
         z: false
         message: ""
+      ,
+        name: 'Tilford Tree'
+        value: 10
+        x: false
+        y: false
+        z: false
+        message: ''
       ]
 
     _getTime = () ->
@@ -357,7 +364,7 @@ charts = angular.module('app_analysis_charts', [])
           return obj
 
       streamColor = scheme_input
-      console.log streamColor
+      #console.log streamColor
 
       send = graphFormat()
       results =
@@ -445,7 +452,7 @@ charts = angular.module('app_analysis_charts', [])
       z = d3.scale.ordinal().range(["darkblue", "blue", "lightblue"])
 
       stacked = d3.layout.stack()(data)
-      console.log stacked
+      #console.log stacked
 
     stackedBar: _stackedBar
 ]
@@ -528,7 +535,7 @@ charts = angular.module('app_analysis_charts', [])
         d0 = data[i - 1]
         d1 = data[i]
         d = x0 - d0.x > d1.x - x0 ? d1 : d0
-        console.log d
+        #console.log d
         focus.select("circle.y")
         .attr("transform","translate(" + x(d0.x) + "," + y(d0.y) + ")")
         val = y.invert(d3.mouse(this)[0])
@@ -542,7 +549,7 @@ charts = angular.module('app_analysis_charts', [])
       .style("pointer-events", "all")
       .on("mouseover", () ->
         focus.style("display", null)
-        console.log val
+        #console.log val
         tooltip.transition().duration(200).style('opacity', .9)
 
       )
@@ -571,7 +578,7 @@ charts = angular.module('app_analysis_charts', [])
       z = d3.scale.ordinal()
       .range(scheme) #["#045A8D", "#2B8CBE", "#74A9CF", "#A6BDDB", "#D0D1E6", "#F1EEF6"])
 
-      console.log scheme
+      #console.log scheme
 
 
       xAxis = d3.svg.axis()
@@ -590,7 +597,7 @@ charts = angular.module('app_analysis_charts', [])
 
       nest = d3.nest().key (d) -> d.z
 
-      console.log data
+      #console.log data
 
       area = d3.svg.area()
       .interpolate("cardinal")
@@ -602,14 +609,14 @@ charts = angular.module('app_analysis_charts', [])
         d.x = new Date d.x
         d.y = +d.y
 
-      console.log nest.entries(data)
+      #console.log nest.entries(data)
 
       layers = stack(nest.entries(data))
 
       x.domain(d3.extent(data, (d)-> d.x))
       y.domain([0, d3.max(data, (d) -> d.y0 + d.y)])
 
-      console.log layers
+      #console.log layers
 
       _graph.selectAll(".layer")
       .data(layers)
@@ -1228,10 +1235,19 @@ charts = angular.module('app_analysis_charts', [])
 
 .factory 'treemap',[
   () ->
-    _drawTreemap = (svg, width, height, container, data) ->
-
+    _drawTreemap = (svg, width, height, container, InputData) ->
+      data = JSON.parse(JSON.stringify(InputData)) # make the InputData immutable
       maxDepth = 5
       sliderValue = 3
+
+      svg.selectAll('g').remove()
+
+      title = svg.append('text')
+        .attr('transform', 'translate(0, 20)')
+        .attr('width', '100%')
+        .text(() -> if (data.name != null) then data.name else '')
+        .attr('color', 'balck')
+        .attr('font-size', 15)
 
       sliderBar = container.append('input')
       .attr('id', 'slider')
@@ -1262,6 +1278,7 @@ charts = angular.module('app_analysis_charts', [])
         sliderBar.attr('max', maxDepth)
 
         node = svg.append('g')
+        .attr('transform', 'translate(0, 35)')
         .selectAll('g.node')
         .data(filteredData)
         .enter().append('g')
@@ -1271,7 +1288,7 @@ charts = angular.module('app_analysis_charts', [])
         .attr('class', 'inner-node')
         .attr('width', (d) -> Math.max(0.01, d.dx - 1))
         .attr('height', (d) -> Math.max(0.01, d.dy - 1))
-        .on('click', (d) -> if d.url then window.open(d.url))
+        .on('dblclick', (d) -> if d.url then window.open(d.url))
 
 
         node.append('rect')
@@ -1282,11 +1299,7 @@ charts = angular.module('app_analysis_charts', [])
         .style('stroke-width', '1px')
         .on('mouseover', () ->
           d3.select(@).append('title')
-          .text((d) ->
-            'Parent: ' + d.parent.name + '\n' +
-              'Name: ' + d.name + '\n' +
-              'Depth: ' + d.depth
-          )
+          .text((d) -> d.name )
           d3.select(@)
           .style('stroke', 'black')
           .style('stroke-width', '3px')
@@ -1350,7 +1363,7 @@ charts = angular.module('app_analysis_charts', [])
       x.domain(d3.extent data, (d) -> d.x)
       y.domain([d3.min(data, (d) -> d.y), d3.max(data, (d) -> d.z)])
 
-      console.log y.domain
+      #console.log y.domain
 
       _graph.append("path")
       .datum(data)
@@ -1410,7 +1423,7 @@ charts = angular.module('app_analysis_charts', [])
       data = []
       for i in [leftBound...rightBound] by 1
         data.push({x:i,y:(1/(std*Math.sqrt(Math.PI*2)))*Math.exp(-(Math.pow(i-mean,2)/ (2*variance)))})
-      console.log(data)
+      #console.log(data)
       data;
 
     getMean = (valueSum,numberOfOccurrences) ->
@@ -1456,7 +1469,7 @@ charts = angular.module('app_analysis_charts', [])
       hideToolTip = () ->
         toolTipElement.innerHTML = " "
 
-      console.log extract(data, "x")
+      #console.log extract(data, "x")
       sample = sort(getRandomValueArray(extract(data,"x")))
       sum = getSum(sample)
       min = sample[0]
@@ -1541,6 +1554,142 @@ charts = angular.module('app_analysis_charts', [])
 
 ]
 
+.factory 'tilfordTree', [
+  () ->
+    _drawTilfordTree = (InputData, container) ->
+      data = JSON.parse(JSON.stringify(InputData)) # make the InputData immutable
+      diameter = 600
+      width = diameter
+      height = diameter
+      i = 0
+      duration = 350
+      root = data
+      root.x0 = height / 2
+      root.y0 = 0
+
+      container.selectAll('svg').remove()
+
+      tree = d3.layout.tree()
+        .size([360, diameter / 2 - 10])
+        .separation( (a, b) -> (if a.parent == b.parent then 1 else 2) / a.depth)
+
+      diagonal = d3.svg.diagonal.radial()
+        .projection((d) -> [d.y, d.x / 180 * Math.PI])
+
+      _svg = container.append('svg')
+      .attr('width', width)
+      .attr('height', height)
+      .append('g')
+        .attr('transform', 'translate(' + diameter / 2 + ',' + diameter / 2 + ')')
+
+      update = (source) ->
+        # Compute new tree layout
+        nodes = tree.nodes(root)
+        links = tree.links(nodes)
+
+        # Normalize for fixed-depth
+        nodes.forEach((d) -> d.y = d.depth * 80)
+
+        # Update the nodes
+        node = _svg.selectAll('g.node')
+        .data(nodes, (d) -> d.id || (d.id = ++i))
+
+        # Enter any new nodes at the parent's previous position
+        nodeEnter = node.enter().append('g')
+        .attr('class', 'node')
+        .on('click', click)
+        .on('dblclick', (d) -> if d.url then window.open(d.url))
+
+        nodeEnter.append('circle')
+        .attr('r', 1e-6)
+        .style('fill', (d) -> if d._children then 'lightstellblue' else '#fff')
+
+        nodeEnter.append('text')
+        .attr('x', 10)
+        .attr('dy', '.35em')
+        .attr('text-anchor', 'start')
+        .text((d) -> d.name)
+        .style('fill-opacity', 1e-6)
+
+        # Transition nodes to their new position
+        nodeUpdate = node.transition()
+        .duration(duration)
+        .attr('transform', (d) -> 'rotate(' + (d.x - 90) + ')translate(' + d.y + ')')
+
+        nodeUpdate.select('circle')
+        .attr('r', 4.5)
+        .style('fill', (d) -> if d._children then 'lightsteelblue' else '#fff')
+
+        nodeUpdate.select('text')
+        .style('fill-opacity', 1)
+        .attr('transform', (d) -> if d.x < 180 then 'translate(0)' else 'rotate(180)translate(-' + (d.name.length + 50) + ')')
+
+        # Appropriate transform
+        nodeExit = node.exit().transition().duration(duration).remove()
+
+        nodeExit.select('circle').attr('r', 1e-6)
+
+        nodeExit.select('text').style('fill-opacity', 1e-6)
+
+        # Update the links
+        link = _svg.selectAll('path.link')
+        .data(links, (d) -> d.target.id)
+
+        # Enter any new links at the parent's previous position
+        link.enter().insert('path', 'g')
+        .attr('class', 'link')
+        .attr('d', (d) ->
+          o = {x: source.x0, y: source.y0}
+          return diagonal({source: o, target: o})
+        )
+
+        # Transition links to their new position
+        link.transition()
+        .duration(duration)
+        .attr('d', diagonal)
+
+        # Transition exiting nodes to the parent's new position
+        link.exit().transition()
+        .duration(duration)
+        .attr('d', (d) ->
+          o = {x: source.x0, y: source.y0}
+          return diagonal({source: o, target: o})
+        ).remove()
+
+        # Stash the old position for transition
+        nodes.forEach((d) ->
+          d.x0 = d.x
+          d.y0 = d.y
+        )
+
+      # Toggle children on click
+      click = (d) ->
+        if(d.children)
+          d._children = d.children
+          d.children = null
+        else
+          d.children = d._children
+          d._children = null
+        update(d)
+
+      # Collapse nodes
+      collapse = (d) ->
+        if(d.children)
+          d._children = d.children
+          d._children.forEach(collapse)
+          d.children = null
+
+      # start with all children collapsed
+      root.children.forEach(collapse)
+      update(root)
+
+      d3.select(self.frameElement).style('height', height)
+
+
+
+    drawTilfordTree: _drawTilfordTree
+]
+
 .directive 'd3Charts', [
   'scatterPlot',
   'histogram',
@@ -1554,8 +1703,9 @@ charts = angular.module('app_analysis_charts', [])
   'bivariate',
   'stackBar',
   'gauss',
+  'tilfordTree',
   'app_analysis_charts_checkTime'
-  (scatterPlot, histogram, pie, bubble, bar, streamGraph, area, treemap, line, bivariate, stackedBar, gauss, time) ->
+  (scatterPlot, histogram, pie, bubble, bar, streamGraph, area, treemap, line, bivariate, stackedBar, gauss, tilfordTree, time) ->
     restrict: 'E'
     template: "<div class='graph-container' style='height: 600px'></div>"
     link: (scope, elem, attr) ->
@@ -1619,5 +1769,7 @@ charts = angular.module('app_analysis_charts', [])
               bivariate.bivariateChart(height,width,_graph, data, gdata)
             when 'Gaussian Distribution'
               gauss.drawGaussianCurve(data, width, height, _graph)
+            when 'Tilford Tree'
+              tilfordTree.drawTilfordTree(data, container)
 
 ]
