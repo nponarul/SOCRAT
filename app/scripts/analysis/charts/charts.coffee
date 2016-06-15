@@ -201,12 +201,12 @@ module.exports = angular.module('app_analysis_charts', [])
         message: "Choose one variable to put into a pie chart."
         xLabel: ""
       ,
-        name: 'Gaussian Distribution'
+        name: 'Normal Distribution'
         value: 5
         x: true
         y: false
         z: false
-        message: "Choose one variable."
+        message: "Choose one variable. This chart assumes there is a normal distribution."
         xLabel: ""
       ,
         name: 'Ring Chart'
@@ -323,7 +323,7 @@ module.exports = angular.module('app_analysis_charts', [])
         message: "Choose one variable to put into a pie chart."
         xLabel: ""
       ,
-        name: 'Gaussian Distribution'
+        name: 'Normal Distribution'
         value: 5
         x: true
         y: false
@@ -1408,7 +1408,7 @@ module.exports = angular.module('app_analysis_charts', [])
     bivariateChart: _bivariateChart
 ]
 
-.factory 'gauss', [
+.factory 'normal', [
   () ->
     distanceFromMean = 5
 
@@ -1474,7 +1474,7 @@ module.exports = angular.module('app_analysis_charts', [])
         values.push data[Math.floor(Math.random() * data.length)]
       return values
 
-    drawGaussianCurve = (data, width, height, _graph) ->
+    drawNormalCurve = (data, width, height, _graph) ->
 
       toolTipElement = _graph.append('div')
       .attr('class', 'tooltipGauss')
@@ -1572,7 +1572,7 @@ module.exports = angular.module('app_analysis_charts', [])
     getLeftBound: getLeftBound
     getZ: getZ
     getRightBound: getRightBound
-    drawGaussianCurve: drawGaussianCurve
+    drawNormalCurve: drawNormalCurve
 
 ]
 
@@ -1588,9 +1588,9 @@ module.exports = angular.module('app_analysis_charts', [])
   'line',
   'bivariate',
   'stackBar',
-  'gauss',
+  'normal',
   'app_analysis_charts_checkTime'
-  (scatterPlot, histogram, pie, bubble, bar, streamGraph, area, treemap, line, bivariate, stackedBar, gauss, time) ->
+  (scatterPlot, histogram, pie, bubble, bar, streamGraph, area, treemap, line, bivariate, stackedBar, normal, time) ->
     restrict: 'E'
     template: "<div class='graph-container' style='height: 600px'></div>"
     link: (scope, elem, attr) ->
@@ -1652,8 +1652,8 @@ module.exports = angular.module('app_analysis_charts', [])
             when 'Bivariate Area Chart'
               time.checkTimeChoice(data)
               bivariate.bivariateChart(height,width,_graph, data, gdata)
-            when 'Gaussian Distribution'
-              gauss.drawGaussianCurve(data, width, height, _graph)
+            when 'Normal Distribution'
+              normal.drawNormalCurve(data, width, height, _graph)
             when 'Pie Chart'
               _graph = svg.append('g').attr("transform", "translate(300,250)").attr("id", "remove")
               pie.drawPie(data,width,height,_graph,true)
