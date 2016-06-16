@@ -4,6 +4,6 @@ ModuleMessageService = require 'scripts/BaseClasses/ModuleMessageService.coffee'
 
 module.exports = class ChartsMsgService extends ModuleMessageService
   @msgList:
-    outgoing: ['save data']
-    incoming: ['get data']
+    outgoing: ['get table']
+    incoming: ['take table']
     scope: ['charts']
