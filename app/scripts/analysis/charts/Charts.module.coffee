@@ -26,6 +26,8 @@ module.exports = charts = new Module
       'app_analysis_charts_treemap': require 'scripts/analysis/charts/ChartsTreemap.service.coffee'
       'app_analysis_charts_list': require 'scripts/analysis/charts/ChartsList.service.coffee'
       'app_analysis_charts_sendData': require 'scripts/analysis/charts/ChartsSendData.service.coffee'
+      'app_analysis_charts_dataTransform': require 'scripts/analysis/charts/ChartsDataTransform.service.coffee'
+      
     controllers:
       'ChartsSidebarCtrl': require 'scripts/analysis/charts/ChartsSidebarCtrl.controller.coffee'
       'ChartsMainCtrl': require 'scripts/analysis/charts/ChartsMainCtrl.controller.coffee'
