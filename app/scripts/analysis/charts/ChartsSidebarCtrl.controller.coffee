@@ -21,8 +21,8 @@ module.exports = class ChartsSidebarCtrl extends BaseCtrl
     @checkTime = @app_analysis_charts_checkTime
 
 
-  @_chartData = null
-  @_headers = null
+  _chartData = null
+  _headers = null
 
   @$scope.selector1 = {}
   @$scope.selector2 = {}
@@ -64,7 +64,7 @@ module.exports = class ChartsSidebarCtrl extends BaseCtrl
       @$scope.graphInfo.x = "initiate"
       sendData.createGraph(@$scope.data, @$scope.graphInfo, {key: 0, value: "initiate"}, @$rootScope, @$scope.dataType, @$scope.selector4.scheme)
     else
-      sendData.createGraph(@_chartData, @$scope.graphInfo, @_headers, @$rootScope, @$scope.dataType, @$scope.selector4.scheme)
+      sendData.createGraph(_chartData, @$scope.graphInfo, _headers, @$rootScope, @$scope.dataType, @$scope.selector4.scheme)
 
   @$scope.changeVar: (selector,headers, ind) ->
     console.log @$scope.selector4.scheme
@@ -72,4 +72,4 @@ module.exports = class ChartsSidebarCtrl extends BaseCtrl
     #only allow numerical ones for ind = y or z
     for h in headers
       if selector.value is h.value then @$scope.graphInfo[ind] = parseFloat h.key
-    sendData.createGraph(@_chartData,@$scope.graphInfo,@_headers, @$rootScope, @$scope.dataType, @$scope.selector4.scheme)
+    sendData.createGraph(_chartData,@$scope.graphInfo,_headers, @$rootScope, @$scope.dataType, @$scope.selector4.scheme)

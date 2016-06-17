@@ -36,7 +36,7 @@ module.exports = class AppModuleList
     Tools: [
       require 'scripts/analysis/tools/Cluster/Cluster.module.coffee'
 #    ,
-#      require 'scripts/analysis/charts/charts.coffee'
+#      require 'scripts/analysis/charts/charts.module.coffee'
     ]
   ]
 
