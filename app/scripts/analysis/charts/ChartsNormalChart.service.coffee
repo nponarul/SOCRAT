@@ -87,19 +87,19 @@ module.exports = class ChartsNormalChart extends BaseService
       toolTipElement.style('display', 'none')
       toolTipElement.innerHTML = " "
 
-    console.log extract(data, "x")
-    sample = sort(getRandomValueArray(extract(data,"x")))
-    sum = getSum(sample)
+    console.log @extract(data, "x")
+    sample = sort(@getRandomValueArray(@extract(data,"x")))
+    sum = @getSum(sample)
     min = sample[0]
     max = sample[sample.length - 1]
-    mean = getMean(sum, sample.length)
-    variance = getVariance(sample, mean)
+    mean = @getMean(sum, sample.length)
+    variance = @getVariance(sample, mean)
     standardDerivation =  Math.sqrt(variance)
-    rightBound = getRightBound(mean, standardDerivation)
-    leftBound = getLeftBound(mean,standardDerivation)
+    rightBound = @getRightBound(mean, standardDerivation)
+    leftBound = @getLeftBound(mean,standardDerivation)
     bottomBound = 0
     topBound = 1/(standardDerivation*Math.sqrt(Math.PI*2))
-    gaussianCurveData = getGaussianFunctionPoints(standardDerivation,mean,variance,leftBound,rightBound)
+    gaussianCurveData = @getGaussianFunctionPoints(standardDerivation,mean,variance,leftBound,rightBound)
     radiusCoef = 5
 
     xScale = d3.scale.linear().range([0, width]).domain([leftBound, rightBound])
