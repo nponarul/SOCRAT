@@ -1,29 +1,40 @@
-div(ng-controller="sideChartsCtrl")
-  h4 Graphs
-  select.form-control#chooseGraph(value="Choose a graph" ng-change="changeName()" ng-model="graphSelect" ng-options="g as g.name for g in graphs")
-  h4 Variables
+div(ng-controller='ChartsSidebarCtrl as sidebar')
+  legend Graphs
+  select#chooseGraph.form-control(
+  value="Choose a graph"
+  ng-change="sidebar.changeName()"
+  ng-model="sidebar.graphSelect"
+  ng-options="g as g.name for g in sidebar.graphs"
+  )
+  legend Variables
   div
-    p {{graphSelect.message}}
+    p {{sidebar.graphInfo.graph}}
     //div(ng-show=categorical).form-inline
       input(ng-model="selectorCat" type="checkbox" id="categorical")
       p X is a categorical variable
   div.form-inline
-    div.form-horizontal(ng-show="graphSelect.x")
-      label(for = "x") {{graphSelect.xLabel}}
-      select#x.form-control(ng-change="changeVar(selector1,headers,'x');" ng-model="selector1" ng-options="v as v.value for v in headers")
-    div.form-horizontal(ng-show="graphSelect.y")
-      label(for = "y") {{graphSelect.yLabel}}
-      select#y.form-control(ng-change="changeVar(selector2,headers,'y');" ng-model="selector2" ng-options="v as v.value for v in headers")
-      div(ng-show = "labelVar")
-        input(ng-model="labelCheck" type="checkbox" id = "label")
+    div.form-horizontal(ng-show="sidebar.graphInfo.x")
+      label(for = "x") Add X
+      select#x.form-control(
+      ng-change="sidebar.changeVar(sidebar.selector1, sidebar.headers,'x');"
+      ng-model="sidebar.selector1"
+      ng-options="v as v.value for v in sidebar.headers"
+      )
+    div.form-horizontal(ng-show="sidebar.graphInfo.y")
+      label(for = "y") Add Y
+      select#y.form-control(
+      ng-change="sidebar.changeVar(sidebar.selector2,sidebar.headers,'y');"
+      ng-model="sidebar.selector2"
+      ng-options="v as v.value for v in sidebar.headers"
+      )
+      div(ng-show = "sidebar.labelVar")
+        input(ng-model="sidebar.labelCheck" type="checkbox" id = "label")
         p Check if Y variable is the labels column
 
-    div.form-horizontal(ng-show="graphSelect.z")
-      label(for = "z") {{graphSelect.zLabel}}
-      select#z.form-control(ng-change="changeVar(selector3,headers,'z');" ng-model="selector3" ng-options="v as v.value for v in headers")
-
-    div.form-horizontal(ng-show="stream")
-      label(for = "colors") Choose a color scheme
-      select#colors.form-control( ng-model = "selector4" ng-change= "changeVar(selector4, headers, 'c');" ng-options="s as s.name for s in streamColors")
-
-
+    div.form-horizontal(ng-show="sidebar.graphInfo.z")
+      label(for = "z") Add Radius
+      select#z.form-control(
+      ng-change="sidebar.changeVar(sidebar.selector3,sidebar.headers,'z');"
+      ng-model="sidebar.selector3"
+      ng-options="v as v.value for v in sidebar.headers"
+      )
