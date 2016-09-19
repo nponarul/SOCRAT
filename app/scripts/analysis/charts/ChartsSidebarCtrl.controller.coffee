@@ -22,6 +22,14 @@ module.exports = class ChartsSidebarCtrl extends BaseCtrl
     @chartData = null
     @headers = null
 
+    # dataset-specific
+    @dataFrame = null
+    @dataType = null
+    @cols = []
+    @xCol = null
+    @yCol = null
+    @labelCol = null
+
     @selector1 = {}
     @selector2 = {}
     @selector3 = {}
@@ -53,12 +61,15 @@ module.exports = class ChartsSidebarCtrl extends BaseCtrl
     @dataService.getData().then (obj) =>
       if obj.dataFrame and obj.dataFrame.dataType?
         dataFrame = obj.dataFrame
+        console.log obj.dataFrame
+        console.log @numericalCols
         switch dataFrame.dataType
           when @DATA_TYPES.FLAT
             @graphs = @list.getFlat()
             @dataType = @DATA_TYPES.FLAT
             @headers = d3.entries dataFrame.header
             @chartData = @dataTransform.format dataFrame.data
+            @parseData(dataFrame.data)
             if @checkTime.checkForTime @chartData
               @graphs = @list.getTime()
           when @DATA_TYPES.NESTED
@@ -89,4 +100,39 @@ module.exports = class ChartsSidebarCtrl extends BaseCtrl
       if selector.value is h.value then @graphInfo[ind] = parseFloat h.key
     @sendData.createGraph(@chartData, @graphInfo, @headers, @dataType, @selector4.scheme)
 
+  updateDataPoints: (data=null, means=null, labels=null) ->
+    if data
+      xCol = data.header.indexOf @xCol
+      yCol = data.header.indexOf @yCol
+      data = ([row[xCol], row[yCol]] for row in data.data)
+    @msgService.broadcast 'charts:updateDataPoints',
+      dataPoints: data
+      means: means
+      labels: labels
 
+# update data-driven sidebar controls
+  updateSidebarControls: (data) ->
+    @cols = data.header
+    @numericalCols = (col for col, idx in @cols when data.types[idx] in ['integer', 'number'])
+    @categoricalCols = (col for col, idx in @cols when data.types[idx] in ['string', 'integer'])
+#     console.log @numericalCols, @categoricalCols
+    # make sure number of unique labels is less than maximum number of clusters for visualization
+#    if @algParams.k
+#      [minK, ..., maxK] = @algParams.k
+#      colData = d3.transpose(data.data)
+#      @categoricalCols = @categoricalCols.filter (x, i) =>
+#        @uniqueVals(colData[i]).length > maxK
+    [@xCol, @yCol, ..., lastCol] = @numericalCols
+#    @clusterRunning = off
+#    if @useLabels
+#      @numUniqueLabels = @detectK data
+    @$timeout =>
+      @updateDataPoints data
+
+  parseData: (data) ->
+    @dataService.inferDataTypes data, (resp) =>
+      if resp and resp.dataFrame
+        console.log resp.dataFrame
+        @updateSidebarControls(resp.dataFrame)
+        @updateDataPoints(resp.dataFrame)
+#        @ready = on

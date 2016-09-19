@@ -16,16 +16,16 @@ div(ng-controller='ChartsSidebarCtrl as sidebar')
     div.form-horizontal(ng-show="sidebar.graphInfo.x")
       label(for = "x") Add X
       select#x.form-control(
-      ng-change="sidebar.changeVar(sidebar.selector1, sidebar.headers,'x');"
-      ng-model="sidebar.selector1"
-      ng-options="v as v.value for v in sidebar.headers"
+      ng-model="sidebar.xCol"
+      ng-options="col for col in sidebar.numericalCols"
+      ng-change="sidebar.updateDataPoints(sidebar.dataFrame)"
       )
     div.form-horizontal(ng-show="sidebar.graphInfo.y")
       label(for = "y") Add Y
       select#y.form-control(
-      ng-change="sidebar.changeVar(sidebar.selector2,sidebar.headers,'y');"
-      ng-model="sidebar.selector2"
-      ng-options="v as v.value for v in sidebar.headers"
+      ng-model="sidebar.yCol"
+      ng-options="col for col in sidebar.numericalCols"
+      ng-change="sidebar.updateDataPoints(sidebar.dataFrame)"
       )
       div(ng-show = "sidebar.labelVar")
         input(ng-model="sidebar.labelCheck" type="checkbox" id = "label")
