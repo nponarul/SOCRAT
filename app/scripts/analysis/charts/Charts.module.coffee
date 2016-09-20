@@ -30,6 +30,7 @@ module.exports = charts = new Module
       'app_analysis_charts_sendData': require 'scripts/analysis/charts/ChartsSendData.service.coffee'
       'app_analysis_charts_dataTransform': require 'scripts/analysis/charts/ChartsDataTransform.service.coffee'
       'app_analysis_charts_checkTime': require 'scripts/analysis/charts/ChartsCheckTime.service.coffee'
+      'app_analysis_charts_graphData': require 'scripts/analysis/charts/ChartsGraphDataService.service.coffee'
 
     controllers:
       'ChartsSidebarCtrl': require 'scripts/analysis/charts/ChartsSidebarCtrl.controller.coffee'

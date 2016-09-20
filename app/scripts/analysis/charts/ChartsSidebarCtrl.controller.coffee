@@ -1,3 +1,4 @@
+
 'use strict'
 
 BaseCtrl = require 'scripts/BaseClasses/BaseController.coffee'
@@ -9,7 +10,8 @@ module.exports = class ChartsSidebarCtrl extends BaseCtrl
     'app_analysis_charts_list',
     'app_analysis_charts_sendData',
     'app_analysis_charts_checkTime',
-    'app_analysis_charts_dataService'
+    'app_analysis_charts_dataService',
+    'app_analysis_charts_msgService'
 
   initialize: ->
     @dataService = @app_analysis_charts_dataService
@@ -18,6 +20,7 @@ module.exports = class ChartsSidebarCtrl extends BaseCtrl
     @sendData = @app_analysis_charts_sendData
     @checkTime = @app_analysis_charts_checkTime
     @DATA_TYPES = @dataService.getDataTypes()
+    @msgService = @app_analysis_charts_msgService
 
     @chartData = null
     @headers = null
@@ -58,18 +61,20 @@ module.exports = class ChartsSidebarCtrl extends BaseCtrl
     @labelVar = false
     @labelCheck = null
 
+
+
     @dataService.getData().then (obj) =>
       if obj.dataFrame and obj.dataFrame.dataType?
         dataFrame = obj.dataFrame
         console.log obj.dataFrame
-        console.log @numericalCols
+#        console.log @numericalCols
         switch dataFrame.dataType
           when @DATA_TYPES.FLAT
             @graphs = @list.getFlat()
             @dataType = @DATA_TYPES.FLAT
             @headers = d3.entries dataFrame.header
             @chartData = @dataTransform.format dataFrame.data
-            @parseData(dataFrame.data)
+            @parseData obj.dataFrame
             if @checkTime.checkForTime @chartData
               @graphs = @list.getTime()
           when @DATA_TYPES.NESTED
@@ -110,29 +115,33 @@ module.exports = class ChartsSidebarCtrl extends BaseCtrl
       means: means
       labels: labels
 
-# update data-driven sidebar controls
+  # update data-driven sidebar controls
   updateSidebarControls: (data) ->
     @cols = data.header
     @numericalCols = (col for col, idx in @cols when data.types[idx] in ['integer', 'number'])
     @categoricalCols = (col for col, idx in @cols when data.types[idx] in ['string', 'integer'])
-#     console.log @numericalCols, @categoricalCols
+    #     console.log @numericalCols, @categoricalCols
     # make sure number of unique labels is less than maximum number of clusters for visualization
-#    if @algParams.k
-#      [minK, ..., maxK] = @algParams.k
-#      colData = d3.transpose(data.data)
-#      @categoricalCols = @categoricalCols.filter (x, i) =>
-#        @uniqueVals(colData[i]).length > maxK
-    [@xCol, @yCol, ..., lastCol] = @numericalCols
-#    @clusterRunning = off
-#    if @useLabels
-#      @numUniqueLabels = @detectK data
+    #    if @algParams.k
+    #      [minK, ..., maxK] = @algParams.k
+    #      colData = d3.transpose(data.data)
+    #      @categoricalCols = @categoricalCols.filter (x, i) =>
+    #        @uniqueVals(colData[i]).length > maxK
+    #    [@xCol, @yCol, ..., lastCol] = @numericalCols
+    #    @clusterRunning = off
+    #    if @useLabels
+    #      @numUniqueLabels = @detectK data
     @$timeout =>
       @updateDataPoints data
 
   parseData: (data) ->
+    console.log "parseData"
     @dataService.inferDataTypes data, (resp) =>
       if resp and resp.dataFrame
         console.log resp.dataFrame
         @updateSidebarControls(resp.dataFrame)
         @updateDataPoints(resp.dataFrame)
-#        @ready = on
+  #        @ready = on
+      else
+        console.log "test"
+

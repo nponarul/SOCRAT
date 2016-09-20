@@ -17,7 +17,6 @@ module.exports = class ClusterSidebarCtrl extends BaseCtrl
     @DATA_TYPES = @dataService.getDataTypes()
     # set up data and algorithm-agnostic controls
     @useLabels = off
-    @useAllData = on
     @reportAccuracy = on
     @clusterRunning = off
     @ready = off
@@ -33,6 +32,9 @@ module.exports = class ClusterSidebarCtrl extends BaseCtrl
     @dataFrame = null
     @dataType = null
     @cols = []
+    @chosenCols = []
+    @numericalCols = []
+    @categoricalCols = []
     @xCol = null
     @yCol = null
     @labelCol = null
@@ -45,7 +47,7 @@ module.exports = class ClusterSidebarCtrl extends BaseCtrl
     @dataService.getData().then (obj) =>
       if obj.dataFrame and obj.dataFrame.dataType? and obj.dataFrame.dataType is @DATA_TYPES.FLAT
         if @dataType isnt obj.dataFrame.dataType
-          # update local data type
+# update local data type
           @dataType = obj.dataFrame.dataType
           # send update to main are actrl
           @msgService.broadcast 'cluster:updateDataType', obj.dataFrame.dataType
@@ -54,7 +56,7 @@ module.exports = class ClusterSidebarCtrl extends BaseCtrl
         # parse dataFrame
         @parseData obj.dataFrame
       else
-        # TODO: add processing for nested object
+# TODO: add processing for nested object
         console.log 'NESTED DATASET'
 
     @$timeout -> $('input[type=checkbox]').bootstrapSwitch()
@@ -72,7 +74,7 @@ module.exports = class ClusterSidebarCtrl extends BaseCtrl
       means: means
       labels: labels
 
-  # update data-driven sidebar controls
+# update data-driven sidebar controls
   updateSidebarControls: (data) ->
     @cols = data.header
     @numericalCols = (col for col, idx in @cols when data.types[idx] in ['integer', 'number'])
@@ -100,13 +102,13 @@ module.exports = class ClusterSidebarCtrl extends BaseCtrl
     if detectedK.num <= 10
       @uniqueLabels = detectedK
       @k = detectedK.num
-      # TODO: add success messages
+# TODO: add success messages
     else
-      # TODO: create popup with warning message
+# TODO: create popup with warning message
       console.log 'KMEANS: k is more than 10'
 
   detectKValue: () ->
-    # extra check that labels are on
+# extra check that labels are on
     if @dataFrame and @useLabels
       labelCol = @dataFrame.header.indexOf @labelCol
       labels = (row[labelCol] for row in @dataFrame.data)
@@ -115,43 +117,39 @@ module.exports = class ClusterSidebarCtrl extends BaseCtrl
         labelCol: @labelCol
         num: uniqueLabels.length
 
-  ## Data preparation methods
+## Data preparation methods
 
-  # get requested columns from data
+# get requested columns from data
   prepareData: () ->
     data = @dataFrame
-    xCol = data.header.indexOf @xCol
-    yCol = data.header.indexOf @yCol
 
-    # if usage of labels is on
-    if @useLabels
-      labelCol = data.header.indexOf @labelCol
-      labels = (row[labelCol] for row in data.data)
-    else
-      labels = null
+    if @chosenCols.length > 1
 
-    # if clustering on the whole dataset is on
-    if @useAllData
-      rawData =
-        if labels
-          data = (row.filter((el, idx) -> idx isnt labelCol) for row in data.data)
-        else
-          # TODO: add checks for non-numeric data
-          data = data.data
-    else
-      # get data for 2 chosen columns
-      data = ([row[xCol], row[yCol]] for row in data.data)
+      xCol = data.header.indexOf @xCol
+      yCol = data.header.indexOf @yCol
+      chosenIdxs = @chosenCols.map (x) -> data.header.indexOf x
 
-    # re-check if possible to compute accuracy
-    if @useLabels and @k is @uniqueLabels.num and @accuracyon
-      acc = on
+      # if usage of labels is on
+      if @labelCol
+        labelColIdx = data.header.indexOf @labelCol
+        labels = (row[labelColIdx] for row in data.data)
+      else
+        labels = null
 
-    obj =
-      data: data
-      labels: labels
-      xCol: xCol
-      yCol: yCol
-      acc: acc
+      data = (row.filter((el, idx) -> idx in chosenIdxs) for row in data.data)
+
+      # re-check if possible to compute accuracy
+      if @useLabels and @k is @uniqueLabels.num and @accuracyon
+        acc = on
+
+      obj =
+        data: data
+        labels: labels
+        xCol: xCol
+        yCol: yCol
+        acc: acc
+
+    else false
 
   parseData: (data) ->
     @dataService.inferDataTypes data, (resp) =>
@@ -160,7 +158,7 @@ module.exports = class ClusterSidebarCtrl extends BaseCtrl
         @updateDataPoints(resp.dataFrame)
         @ready = on
 
-  ## Interface method to run clustering
+## Interface method to run clustering
 
   runClustering: ->
     clustData = @prepareData()
@@ -187,5 +185,3 @@ module.exports = class ClusterSidebarCtrl extends BaseCtrl
   reset: ->
     @algorithmsService.reset @selectedAlgorithm
     @updateDataPoints(@dataFrame, null, null)
-
-
