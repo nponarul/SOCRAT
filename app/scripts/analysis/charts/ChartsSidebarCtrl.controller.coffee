@@ -11,6 +11,7 @@ module.exports = class ChartsSidebarCtrl extends BaseCtrl
     'app_analysis_charts_checkTime',
     'app_analysis_charts_dataService',
     'app_analysis_charts_msgService',
+    'app_analysis_charts_chartsStats',
     '$timeout'
 
   initialize: ->
@@ -23,6 +24,7 @@ module.exports = class ChartsSidebarCtrl extends BaseCtrl
     @DATA_TYPES = @dataService.getDataTypes()
     @graphs = []
     @selectedGraph = null
+    @chartStats = @app_analysis_charts_chartsStats
 
     # dataset-specific
     @dataFrame = null
@@ -56,6 +58,7 @@ module.exports = class ChartsSidebarCtrl extends BaseCtrl
             @selectedGraph = @graphs[0]
             @dataType = @DATA_TYPES.FLAT
             @parseData dataFrame
+            @statsData dataFrame
 #            @chartData = @dataTransform.format dataFrame.data
             if @checkTime.checkForTime dataFrame.data
               @graphs = @list.getTime()
@@ -64,6 +67,38 @@ module.exports = class ChartsSidebarCtrl extends BaseCtrl
             @data = dataFrame.data
             @dataType = @DATA_TYPES.NESTED
             @header = {key: 0, value: "initiate"}
+
+  statsData: (dataFrame) ->
+    d = @dataTransform.transpose dataFrame.data
+    stats = []
+    for i in d
+      obj = {}
+      obj.mean = @chartStats.getMean(i)
+      obj.median = @chartStats.getMedian(i)
+      obj.stdev = @chartStats.getStDev(i)
+      obj.count = @chartStats.getCount(i)
+      stats.push obj
+    console.log stats
+
+    #code below from Selvam's implementation in getData
+    formattedData = dataFrame.data.map (entry)->
+      obj = {}
+      dataFrame.header.forEach (h,key)->
+        # stats.js lib for a key "indicator.id" checks obj["indicator"]["id"]
+        # to fix that, replacing all "." with "_"
+        obj[h.replace('.','_')] = entry[key]
+      obj
+
+    newDataFrame = Object.assign {}, dataFrame, {data:formattedData}
+
+    @dataService.getSummary newDataFrame, (resp) =>
+      if resp? and resp.dataFrame? and resp.dataFrame.data?
+        console.log resp.dataFrame.data #nothing in console for this
+
+    # This does not work
+#    @dataService.getMean d[0], (resp) =>
+#      if resp? and resp.dataFrame? and resp.dataFrame.data?
+#        console.log resp.dataFrame.data
 
   parseData: (data) ->
     df = data

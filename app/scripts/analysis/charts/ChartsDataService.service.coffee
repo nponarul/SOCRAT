@@ -14,3 +14,12 @@ module.exports = class ChartsDataService extends BaseModuleDataService
   inferDataTypes: (data, cb) ->
     @post(@msgManager.getMsgList().outgoing[1], @msgManager.getMsgList().incoming[1], data).then (resp) =>
       cb resp
+
+  getMean: (values, cb) ->
+    @post(@msgManager.getMsgList().outgoing[3], @msgManager.getMsgList().incoming[3], values).then (resp) =>
+      cb resp
+
+
+  #code below from Selvam's implementation in getData
+  getSummary: (data) ->
+    @post(@msgManager.getMsgList().outgoing[2], @msgManager.getMsgList().incoming[2], data)

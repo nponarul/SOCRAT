@@ -66,6 +66,28 @@ module.exports = class AppMessageMap
         'app_analysis_charts',
         'app_analysis_reliability'
       ]
+
+    ,
+      msgFrom: 'data mean'
+      scopeFrom: ['app_analysis_charts']
+      msgTo: 'mean'
+      scopeTo: ['app_analysis_datalib']
+    ,
+      msgFrom: 'mean_res'
+      scopeFrom: ['app_analysis_datalib']
+      msgTo: 'data mean result'
+      scopeTo: ['app_analysis_charts']
+
+    ,
+      msgFrom: 'data summary'
+      scopeFrom: ['app_analysis_charts']
+      msgTo: 'summary'
+      scopeTo: ['app_analysis_datalib']
+    ,
+      msgFrom: 'summary_res'
+      scopeFrom: ['app_analysis_datalib']
+      msgTo: 'data summary result'
+      scopeTo: ['app_analysis_charts']
     ]
 
   getMap: ->
